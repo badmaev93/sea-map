@@ -13,7 +13,7 @@ app.get('/api/data', (req, res) => {
 
     fs.createReadStream('data.csv')
       .on('error', (error) => {
-ъ        console.error("Ошибка чтения файла:", error);
+        console.error("Ошибка чтения файла:", error);
         res.status(500).json({ error: 'Не удалось прочитать файл с данными' });
       })
       .pipe(csv()) 
