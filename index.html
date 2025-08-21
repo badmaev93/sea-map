@@ -28,7 +28,7 @@
         #menu label { font-size: 14px; }
         #year-select { width: 100%; padding: 5px; }
         #legend { 
-            position: absolute; background: rgba(255, 255, 255, 0.9); padding: 10px; bottom: 30px; 
+            position: absolute; background: rgba(255, 255, 255, 0.9); padding: 10px; bottom: 50px;
             right: 10px; border-radius: 4px; z-index: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
         }
         .legend-key { display: inline-block; width: 15px; height: 15px; margin-right: 5px; vertical-align: middle; border: 1px solid #ccc; }
@@ -40,18 +40,61 @@
         .mapboxgl-popup-content table { width: 100%; margin-top: 8px; border-collapse: collapse; }
         .mapboxgl-popup-content td { padding: 3px 0; }
         .mapboxgl-popup-content td:last-child { text-align: right; font-weight: bold; padding-left: 10px; }
+        
+        .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib {
+            display: none !important;
+        }
+
+        /* 2. Стили логотипа */
+        #custom-logo {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 2;
+        }
+        #custom-logo img {
+            height: 80px; /* размер */
+            width: auto;
+        }
+
+        #custom-attribution {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 2;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        #custom-attribution a {
+            color: #333;
+            text-decoration: none;
+        }
+        #custom-attribution a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
 <div id="map"></div>
 
+<div id="custom-logo">
+    <img src="http://www.ferhri.ru/images/150_logo75.png" alt="ДВНИГМИ">
+</div>
+<div id="custom-attribution">
+    <a href="https://www.mapbox.com/about/maps/" target="_blank">© Mapbox</a> | 
+    <a href="http://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap</a> | 
+    <a href="https://www.mapbox.com/feedback/" target="_blank">Обратная связь по карте</a>
+</div>
+
+
 <div id="menu">
     <fieldset>
         <legend>Год</legend>
         <select id="year-select"></select>
     </fieldset>
-
     <h4>Параметры</h4>
     <div class="layer-group">
         <button id="btn-oxygen-points" class="active" data-param="oxygen">Кислород</button>
@@ -59,7 +102,6 @@
         <button id="btn-temp-points" data-param="temp">Температура</button>
         <button id="btn-salinity-points" data-param="salinity">Солёность</button>
     </div>
-
     <fieldset>
         <legend>Горизонт</legend>
         <input type="radio" id="horizon-surface" name="horizon" value="0" checked>
@@ -67,7 +109,6 @@
         <input type="radio" id="horizon-bottom" name="horizon" value="дно">
         <label for="horizon-bottom">Дно</label>
     </fieldset>
-    
     <div class="controls">
         <input type="checkbox" id="show-labels">
         <label for="show-labels">Показывать подписи</label>
@@ -77,14 +118,14 @@
 <div id="legend"></div>
 
 <script>
-
     mapboxgl.accessToken = 'pk.eyJ1IjoiYm9sZWc5MzQiLCJhIjoiY2syY3pjeXFyMjN5aTNobzZmZGl5cng3aiJ9.ADhGQN0rFnGwPCk53capfQ';
 
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/light-v10', 
         center: [132.026960, 43.130572],
-        zoom: 8.95
+        zoom: 8.95,
+        attributionControl: false 
     });
     
     const config = {
@@ -104,13 +145,6 @@
         horizon: '0',
         year: null 
     };
-
-    function formatNumber(value, decimalPlaces) { /* ... */ }
-    function formatFullDateTime(dateStr, timeStr) { /* ... */ }
-    function generateDynamicBreaks(data, prop, numSteps) { /* ... */ }
-    function updateLegend() { /* ... */ }
-    function updateLayers() { /* ... */ }
-    function setupControls(years) { /* ... */ }
 
     function formatNumber(value, decimalPlaces) { if (typeof value !== 'number' || !isFinite(value)) return 'н/д'; return value.toFixed(decimalPlaces).replace('.', ','); }
     function formatFullDateTime(dateStr, timeStr) { if (!dateStr || !timeStr) return 'Нет данных'; const dateParts = String(dateStr).split('/'); const timeParts = String(timeStr).split(':'); if (dateParts.length !== 3 || timeParts.length < 2) return 'Неверный формат'; const [month, day, year] = dateParts; const [hour, minute] = timeParts; return `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.${year} ${hour}:${minute}`; }
@@ -176,7 +210,7 @@
 
     map.on('load', () => {
         map.setLanguage('ru');
-        initializeMap(); // Запускаем основную функцию
+        initializeMap();
     });
 </script>
 
