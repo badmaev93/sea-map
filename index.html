@@ -183,6 +183,7 @@
             map.addSource('points-source', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 
             Object.entries(config.scales).forEach(([param, scale]) => {
+                map.addLayer({ id: `${param}-points-layer`, type: 'circle', source: 'points-source', layout: { visibility: 'none' }, paint: { 'circle-stroke-width': 1.5, 'circle-stroke-color': '#fff' } }, config.firstLabelLayerId);
                 map.addLayer({
     id: `${param}-labels-layer`,
     type: 'symbol',
@@ -198,8 +199,8 @@
     paint: {
         'text-color': '#ffffff',         
         'text-halo-color': '#000000',   
-        'text-halo-width': 1.5,          
-        'text-halo-blur': 0.5         
+        'text-halo-width': 0.7,          
+        'text-halo-blur': 0.3         
     }
 }, config.firstLabelLayerId);
             });
@@ -233,5 +234,6 @@
 </body>
 
 </html>
+
 
 
