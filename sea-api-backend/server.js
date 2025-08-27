@@ -14,11 +14,9 @@ async function loadAndProcessData() {
     return new Promise((resolve, reject) => {
         const results = [];
         const csvFilePath = path.join(__dirname, 'data.csv');
-
         if (!fs.existsSync(csvFilePath)) {
             return reject(new Error(`Критическая ошибка: Файл data.csv не найден по пути ${csvFilePath}`));
         }
-
         fs.createReadStream(csvFilePath)
             .pipe(csv())
             .on('data', (data) => results.push(data))
@@ -44,22 +42,29 @@ async function startServer() {
     try {
         const cachedData = await loadAndProcessData();
         
-        const coastlinePolygon = coastline[0]; 
-        console.log("Полигон береговой линии успешно загружен.");
-
-        app.get('/', (req, res) => {
-            res.send('API сервер для карты работает!');
-        });
-
-        app.get('/api/data', (req, res) => {
-            res.json(cachedData);
-        });
+        let localCoastlinePolygon = null;
+        if (cachedData.length > 0) {
+            console.log("Оптимизируем полигон береговой линии...");
+            const dataPoints = turf.featureCollection(cachedData.map(p => turf.point([p.longitude, p.latitude])));
+            const dataBbox = turf.bbox(dataPoints);
+            // Создаем буфер вокруг данных, чтобы захватить ближайший берег
+            const bufferedArea = turf.buffer(turf.bboxPolygon(dataBbox), 10, { units: 'kilometers' });
+            
+            // Обрезаем гигантский мировой полигон до нашего маленького региона
+            localCoastlinePolygon = turf.intersect(coastline[0], bufferedArea);
+            if (localCoastlinePolygon) {
+                console.log("Полигон береговой линии успешно оптимизирован.");
+            } else {
+                console.warn("Не удалось оптимизировать полигон, возможно, данные далеко от берега.");
+                localCoastlinePolygon = coastline[0]; // Используем глобальный как запасной вариант
+            }
+        }
+        app.get('/', (req, res) => res.send('API сервер для карты работает!'));
+        app.get('/api/data', (req, res) => res.json(cachedData));
 
         app.get('/api/isolines', (req, res) => {
             const { year, horizon, param, breaks } = req.query;
-            if (!year || !horizon || !param || !breaks) {
-                return res.status(400).json({ error: 'Недостаточно параметров' });
-            }
+            if (!year || !horizon || !param || !breaks) return res.status(400).json({ error: 'Недостаточно параметров' });
             
             try {
                 const breakPoints = breaks.split(',').map(parseFloat).filter(isFinite);
@@ -82,9 +87,9 @@ async function startServer() {
                 const rawIsolines = turf.isolines(grid, validBreaks, { zProperty: param });
 
                 let clippedIsolines = [];
-                if (coastlinePolygon) {
+                if (localCoastlinePolygon) {
                     rawIsolines.features.forEach(line => {
-                        const clippedLine = turf.difference(line, coastlinePolygon);
+                        const clippedLine = turf.difference(line, localCoastlinePolygon);
                         if (clippedLine) {
                             clippedLine.properties = line.properties;
                             clippedIsolines.push(clippedLine);
@@ -95,9 +100,7 @@ async function startServer() {
                 }
                 
                 const finalIsolines = turf.featureCollection(clippedIsolines);
-                finalIsolines.features.forEach(feature => {
-                    feature.properties.value = feature.properties[param];
-                });
+                finalIsolines.features.forEach(feature => { feature.properties.value = feature.properties[param]; });
                 
                 res.json(finalIsolines);
             } catch (error) {
