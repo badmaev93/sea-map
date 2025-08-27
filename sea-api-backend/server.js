@@ -10,9 +10,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 app.use(cors());
 
-// --- ПЕРЕПИСАННАЯ АСИНХРОННАЯ ЛОГИКА ---
-
-// Функция теперь асинхронная и возвращает данные
 async function loadAndProcessData() {
     return new Promise((resolve, reject) => {
         const results = [];
@@ -43,15 +40,13 @@ async function loadAndProcessData() {
     });
 }
 
-// Главная асинхронная функция для запуска сервера
 async function startServer() {
     try {
-        // 1. Сначала дожидаемся загрузки данных
         const cachedData = await loadAndProcessData();
-        const coastlinePolygon = coastline.features[0];
+        
+        const coastlinePolygon = coastline[0]; 
         console.log("Полигон береговой линии успешно загружен.");
 
-        // 2. Определяем маршруты, которые будут использовать эти данные
         app.get('/', (req, res) => {
             res.send('API сервер для карты работает!');
         });
@@ -111,16 +106,14 @@ async function startServer() {
             }
         });
 
-        // 3. И только теперь запускаем сервер
         app.listen(port, () => {
             console.log(`Сервер успешно запущен и слушает порт ${port}`);
         });
 
     } catch (error) {
         console.error("Критическая ошибка при запуске сервера:", error);
-        process.exit(1); // Завершаем процесс, если данные не загрузились
+        process.exit(1);
     }
 }
 
-// Запускаем всю логику
 startServer();
