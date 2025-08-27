@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
 const turf = require('@turf/turf');
-const coastline = require('@geo-maps/countries-coastline-1m');
+const coastlineData = require('@geo-maps/countries-coastline-1m');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -46,23 +46,29 @@ async function startServer() {
         if (cachedData.length > 0) {
             console.log("Оптимизируем полигон береговой линии...");
 
-            // --- ИСПРАВЛЕННЫЙ БЛОК: Добавляем фильтрацию некорректных координат ---
             const validPoints = cachedData
                 .filter(p => isFinite(p.longitude) && isFinite(p.latitude))
                 .map(p => turf.point([p.longitude, p.latitude]));
 
             if (validPoints.length > 0) {
+
+                const worldCoastlineFeature = {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": coastlineData[0] // Сам объект геометрии
+                };
+
                 const dataPoints = turf.featureCollection(validPoints);
                 const dataBbox = turf.bbox(dataPoints);
                 const bufferedArea = turf.buffer(turf.bboxPolygon(dataBbox), 10, { units: 'kilometers' });
                 
-                localCoastlinePolygon = turf.intersect(coastline[0], bufferedArea);
+                localCoastlinePolygon = turf.intersect(worldCoastlineFeature, bufferedArea);
 
                 if (localCoastlinePolygon) {
                     console.log("Полигон береговой линии успешно оптимизирован.");
                 } else {
                     console.warn("Не удалось оптимизировать полигон, возможно, данные далеко от берега.");
-                    localCoastlinePolygon = coastline[0];
+                    localCoastlinePolygon = worldCoastlineFeature;
                 }
             } else {
                 console.error("В данных нет ни одной точки с корректными координатами.");
