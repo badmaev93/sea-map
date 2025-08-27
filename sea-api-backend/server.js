@@ -9,74 +9,93 @@ const app = express();
 const port = process.env.PORT || 3000;
 app.use(cors());
 
-let cachedData = [];
+let dataPromise = null; 
 
 function loadAndProcessData() {
-    const csvFilePath = path.join(__dirname, 'data.csv');
+    return new Promise((resolve, reject) => {
+        const results = [];
+        const csvFilePath = path.join(__dirname, 'data.csv');
 
-    if (!fs.existsSync(csvFilePath)) {
-        console.error(`Критическая ошибка: Файл data.csv не найден по пути ${csvFilePath}`);
+        if (!fs.existsSync(csvFilePath)) {
+            console.error(`Критическая ошибка: Файл data.csv не найден по пути ${csvFilePath}`);
+            return reject(new Error('CSV file not found'));
+        }
 
-        return; 
-    }
-
-    const fileContent = fs.readFileSync(csvFilePath, 'utf8');
-    const results = [];
-    
-    const readableStream = require('stream').Readable.from(fileContent);
-    readableStream
-        .pipe(csv())
-        .on('data', (data) => results.push(data))
-        .on('end', () => {
-            cachedData = results.map(row => ({
-                ...row,
-                depth_m: parseFloat(row.depth_m),
-                temp_c: parseFloat(row.temp_c),
-                salinity_psu: parseFloat(row.salinity_psu),
-                oxygen_mgl: parseFloat(row.oxygen_mgl),
-                ph: parseFloat(row.ph),
-                latitude: parseFloat(row.latitude),
-                longitude: parseFloat(row.longitude)
-            }));
-            console.log(`Данные из CSV успешно загружены. Записей: ${cachedData.length}`);
-        });
+        fs.createReadStream(csvFilePath)
+            .pipe(csv())
+            .on('data', (data) => results.push(data))
+            .on('error', (error) => reject(error))
+            .on('end', () => {
+                const processedData = results.map(row => ({
+                    ...row,
+                    depth_m: parseFloat(row.depth_m),
+                    temp_c: parseFloat(row.temp_c),
+                    salinity_psu: parseFloat(row.salinity_psu),
+                    oxygen_mgl: parseFloat(row.oxygen_mgl),
+                    ph: parseFloat(row.ph),
+                    latitude: parseFloat(row.latitude),
+                    longitude: parseFloat(row.longitude)
+                }));
+                console.log(`Данные из CSV успешно загружены. Записей: ${processedData.length}`);
+                resolve(processedData); // Успешно завершаем Promise
+            });
+    });
 }
 
-loadAndProcessData();
+dataPromise = loadAndProcessData().catch(err => {
+    console.error("Не удалось загрузить данные при запуске:", err);
+    return []; 
+});
 
 app.get('/', (req, res) => {
     res.send('API сервер для карты работает!');
 });
 
-app.get('/api/data', (req, res) => {
-    res.json(cachedData);
-});
-
-app.get('/api/isolines', (req, res) => {
-});
-
-app.listen(port, () => {
-    console.log(`Сервер успешно запущен и слушает порт ${port}`);
-});
-
-app.get('/api/isolines', (req, res) => {
-    const { year, horizon, param, breaks } = req.query;
-    if (!year || !horizon || !param || !breaks) { return res.status(400).json({ error: 'Недостаточно параметров для генерации изолиний' }); }
-    const breakPoints = breaks.split(',').map(parseFloat).filter(isFinite);
-    const features = cachedData.filter(p => String(p.date).split('/')[2] === year && String(p.horizon) === horizon && p[param] != null && isFinite(p[param])).map(p => turf.point([p.longitude, p.latitude], { [param]: p[param] }));
-    if (features.length < 3) { return res.json({ type: 'FeatureCollection', features: [] }); }
+app.get('/api/data', async (req, res) => {
     try {
+        const cachedData = await dataPromise;
+        res.json(cachedData);
+    } catch (error) {
+        res.status(500).json({ error: "Ошибка при получении данных." });
+    }
+});
+
+app.get('/api/isolines', async (req, res) => {
+    const { year, horizon, param, breaks } = req.query;
+    if (!year || !horizon || !param || !breaks) {
+        return res.status(400).json({ error: 'Недостаточно параметров' });
+    }
+    
+    try {
+        const cachedData = await dataPromise;
+        const breakPoints = breaks.split(',').map(parseFloat).filter(isFinite);
+        const features = cachedData
+            .filter(p => String(p.date).split('/')[2] === year && String(p.horizon) === horizon && p[param] != null && isFinite(p[param]))
+            .map(p => turf.point([p.longitude, p.latitude], { [param]: p[param] }));
+
+        if (features.length < 3) {
+            return res.json({ type: 'FeatureCollection', features: [] });
+        }
+
         const dataValues = features.map(f => f.properties[param]);
         const dataMin = Math.min(...dataValues);
         const dataMax = Math.max(...dataValues);
         const validBreaks = breakPoints.filter(b => b > dataMin && b < dataMax);
-        if (validBreaks.length === 0) { return res.json({ type: 'FeatureCollection', features: [] }); }
+        if (validBreaks.length === 0) {
+            return res.json({ type: 'FeatureCollection', features: [] });
+        }
+
         const tin = turf.tin({ type: 'FeatureCollection', features }, param);
         const isolines = turf.isolines(tin, validBreaks, { zProperty: param });
         isolines.features.forEach(feature => { feature.properties.value = feature.properties[param]; });
         res.json(isolines);
+
     } catch (error) {
-        console.error(`Критическая ошибка при генерации изолиний для ${param}:`, error);
-        res.status(500).json({ error: "Внутренняя ошибка сервера при генерации изолиний", details: error.message });
+        console.error(`Ошибка при генерации изолиний для ${param}:`, error);
+        res.status(500).json({ error: "Ошибка на сервере при генерации изолиний", details: error.message });
     }
+});
+
+app.listen(port, () => {
+    console.log(`Сервер успешно запущен и слушает порт ${port}`);
 });
