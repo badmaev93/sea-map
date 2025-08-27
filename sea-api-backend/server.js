@@ -45,20 +45,30 @@ async function startServer() {
         let localCoastlinePolygon = null;
         if (cachedData.length > 0) {
             console.log("Оптимизируем полигон береговой линии...");
-            const dataPoints = turf.featureCollection(cachedData.map(p => turf.point([p.longitude, p.latitude])));
-            const dataBbox = turf.bbox(dataPoints);
-            // Создаем буфер вокруг данных, чтобы захватить ближайший берег
-            const bufferedArea = turf.buffer(turf.bboxPolygon(dataBbox), 10, { units: 'kilometers' });
-            
-            // Обрезаем гигантский мировой полигон до нашего маленького региона
-            localCoastlinePolygon = turf.intersect(coastline[0], bufferedArea);
-            if (localCoastlinePolygon) {
-                console.log("Полигон береговой линии успешно оптимизирован.");
+
+            // --- ИСПРАВЛЕННЫЙ БЛОК: Добавляем фильтрацию некорректных координат ---
+            const validPoints = cachedData
+                .filter(p => isFinite(p.longitude) && isFinite(p.latitude))
+                .map(p => turf.point([p.longitude, p.latitude]));
+
+            if (validPoints.length > 0) {
+                const dataPoints = turf.featureCollection(validPoints);
+                const dataBbox = turf.bbox(dataPoints);
+                const bufferedArea = turf.buffer(turf.bboxPolygon(dataBbox), 10, { units: 'kilometers' });
+                
+                localCoastlinePolygon = turf.intersect(coastline[0], bufferedArea);
+
+                if (localCoastlinePolygon) {
+                    console.log("Полигон береговой линии успешно оптимизирован.");
+                } else {
+                    console.warn("Не удалось оптимизировать полигон, возможно, данные далеко от берега.");
+                    localCoastlinePolygon = coastline[0];
+                }
             } else {
-                console.warn("Не удалось оптимизировать полигон, возможно, данные далеко от берега.");
-                localCoastlinePolygon = coastline[0]; // Используем глобальный как запасной вариант
+                console.error("В данных нет ни одной точки с корректными координатами.");
             }
         }
+        
         app.get('/', (req, res) => res.send('API сервер для карты работает!'));
         app.get('/api/data', (req, res) => res.json(cachedData));
 
@@ -69,7 +79,7 @@ async function startServer() {
             try {
                 const breakPoints = breaks.split(',').map(parseFloat).filter(isFinite);
                 const features = cachedData
-                    .filter(p => String(p.date).split('/')[2] === year && String(p.horizon) === horizon && p[param] != null && isFinite(p[param]))
+                    .filter(p => String(p.date).split('/')[2] === year && String(p.horizon) === horizon && p[param] != null && isFinite(p[param]) && isFinite(p.longitude) && isFinite(p.latitude))
                     .map(p => turf.point([p.longitude, p.latitude], { [param]: p[param] }));
 
                 if (features.length < 3) return res.json({ type: 'FeatureCollection', features: [] });
@@ -100,7 +110,9 @@ async function startServer() {
                 }
                 
                 const finalIsolines = turf.featureCollection(clippedIsolines);
-                finalIsolines.features.forEach(feature => { feature.properties.value = feature.properties[param]; });
+                finalIsolines.features.forEach(feature => {
+                    feature.properties.value = feature.properties[param];
+                });
                 
                 res.json(finalIsolines);
             } catch (error) {
