@@ -51,7 +51,8 @@ async function startServer() {
                 .map(p => turf.point([p.longitude, p.latitude]));
 
             if (validPoints.length > 0) {
-
+                // --- ИСПРАВЛЕННЫЙ БЛОК: Создаем правильный GeoJSON ---
+                // "Оборачиваем" данные из пакета в стандартный формат Feature
                 const worldCoastlineFeature = {
                     "type": "Feature",
                     "properties": {},
