@@ -9,7 +9,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 app.use(cors());
 
-let dataPromise = null; 
+let dataPromise = null;
 
 function loadAndProcessData() {
     return new Promise((resolve, reject) => {
@@ -37,7 +37,7 @@ function loadAndProcessData() {
                     longitude: parseFloat(row.longitude)
                 }));
                 console.log(`Данные из CSV успешно загружены. Записей: ${processedData.length}`);
-                resolve(processedData); // Успешно завершаем Promise
+                resolve(processedData);
             });
     });
 }
@@ -85,9 +85,11 @@ app.get('/api/isolines', async (req, res) => {
             return res.json({ type: 'FeatureCollection', features: [] });
         }
 
-        const tin = turf.tin({ type: 'FeatureCollection', features }, param);
-        const isolines = turf.isolines(tin, validBreaks, { zProperty: param });
-        isolines.features.forEach(feature => { feature.properties.value = feature.properties[param]; });
+        const isolines = turf.isolines({ type: 'FeatureCollection', features }, validBreaks, { zProperty: param });
+        
+        isolines.features.forEach(feature => {
+            feature.properties.value = feature.properties[param];
+        });
         res.json(isolines);
 
     } catch (error) {
