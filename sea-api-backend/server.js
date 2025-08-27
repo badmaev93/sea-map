@@ -51,6 +51,7 @@ async function startServer() {
                 .map(p => turf.point([p.longitude, p.latitude]));
 
             if (validPoints.length > 0) {
+
                 const worldCoastlineFeature = {
                     "type": "Feature",
                     "properties": {},
@@ -61,6 +62,7 @@ async function startServer() {
                 const dataBbox = turf.bbox(dataPoints);
                 const bufferedArea = turf.buffer(turf.bboxPolygon(dataBbox), 10, { units: 'kilometers' });
                 
+                // Теперь turf.intersect получит правильные данные
                 localCoastlinePolygon = turf.intersect(worldCoastlineFeature, bufferedArea);
 
                 if (localCoastlinePolygon) {
