@@ -51,26 +51,66 @@ async function startServer() {
                 .map(p => turf.point([p.longitude, p.latitude]));
 
             if (validPoints.length > 0) {
-                // --- ИСПРАВЛЕННЫЙ БЛОК: Создаем правильный GeoJSON ---
-                // "Оборачиваем" данные из пакета в стандартный формат Feature
-                const worldCoastlineFeature = {
-                    "type": "Feature",
-                    "properties": {},
-                    "geometry": coastlineData[0] // Сам объект геометрии
-                };
+                try {
+                    // Debug: проверим структуру coastlineData
+                    console.log("Структура coastlineData:", typeof coastlineData, Array.isArray(coastlineData));
+                    
+                    let worldCoastlineFeature;
+                    
+                    // Попробуем разные варианты структуры данных
+                    if (Array.isArray(coastlineData) && coastlineData.length > 0) {
+                        // Если это массив, берем первый элемент
+                        if (coastlineData[0].type === 'Feature') {
+                            worldCoastlineFeature = coastlineData[0];
+                        } else if (coastlineData[0].type === 'FeatureCollection') {
+                            worldCoastlineFeature = coastlineData[0].features[0];
+                        } else {
+                            // Если это просто геометрия, оборачиваем в Feature
+                            worldCoastlineFeature = {
+                                "type": "Feature",
+                                "properties": {},
+                                "geometry": coastlineData[0]
+                            };
+                        }
+                    } else if (coastlineData.type === 'FeatureCollection') {
+                        // Если это FeatureCollection напрямую
+                        worldCoastlineFeature = coastlineData.features[0];
+                    } else if (coastlineData.type === 'Feature') {
+                        // Если это Feature напрямую
+                        worldCoastlineFeature = coastlineData;
+                    } else {
+                        // Если это просто геометрия
+                        worldCoastlineFeature = {
+                            "type": "Feature",
+                            "properties": {},
+                            "geometry": coastlineData
+                        };
+                    }
 
-                const dataPoints = turf.featureCollection(validPoints);
-                const dataBbox = turf.bbox(dataPoints);
-                const bufferedArea = turf.buffer(turf.bboxPolygon(dataBbox), 10, { units: 'kilometers' });
-                
-                // Теперь turf.intersect получит правильные данные
-                localCoastlinePolygon = turf.intersect(worldCoastlineFeature, bufferedArea);
+                    // Проверим, что у нас есть валидная геометрия
+                    if (!worldCoastlineFeature || !worldCoastlineFeature.geometry || !worldCoastlineFeature.geometry.coordinates) {
+                        throw new Error("Не удалось извлечь валидную геометрию из coastlineData");
+                    }
 
-                if (localCoastlinePolygon) {
-                    console.log("Полигон береговой линии успешно оптимизирован.");
-                } else {
-                    console.warn("Не удалось оптимизировать полигон, возможно, данные далеко от берега.");
-                    localCoastlinePolygon = worldCoastlineFeature;
+                    console.log("Тип геометрии береговой линии:", worldCoastlineFeature.geometry.type);
+
+                    const dataPoints = turf.featureCollection(validPoints);
+                    const dataBbox = turf.bbox(dataPoints);
+                    const bufferedArea = turf.buffer(turf.bboxPolygon(dataBbox), 10, { units: 'kilometers' });
+                    
+                    // Теперь turf.intersect получит правильные данные
+                    localCoastlinePolygon = turf.intersect(worldCoastlineFeature, bufferedArea);
+
+                    if (localCoastlinePolygon) {
+                        console.log("Полигон береговой линии успешно оптимизирован.");
+                    } else {
+                        console.warn("Не удалось оптимизировать полигон, возможно, данные далеко от берега.");
+                        localCoastlinePolygon = worldCoastlineFeature;
+                    }
+                } catch (coastlineError) {
+                    console.error("Ошибка при работе с береговой линией:", coastlineError.message);
+                    console.log("Продолжаем работу без оптимизации береговой линии...");
+                    localCoastlinePolygon = null;
                 }
             } else {
                 console.error("В данных нет ни одной точки с корректными координатами.");
@@ -107,10 +147,16 @@ async function startServer() {
                 let clippedIsolines = [];
                 if (localCoastlinePolygon) {
                     rawIsolines.features.forEach(line => {
-                        const clippedLine = turf.difference(line, localCoastlinePolygon);
-                        if (clippedLine) {
-                            clippedLine.properties = line.properties;
-                            clippedIsolines.push(clippedLine);
+                        try {
+                            const clippedLine = turf.difference(line, localCoastlinePolygon);
+                            if (clippedLine) {
+                                clippedLine.properties = line.properties;
+                                clippedIsolines.push(clippedLine);
+                            }
+                        } catch (clipError) {
+                            console.warn("Ошибка при обрезке изолинии:", clipError.message);
+                            // Если обрезка не удалась, добавляем оригинальную линию
+                            clippedIsolines.push(line);
                         }
                     });
                 } else {
