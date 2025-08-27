@@ -3,7 +3,6 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
-const turf = require('@turf/turf');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -14,10 +13,12 @@ let cachedData = [];
 function loadData() {
     const results = [];
     const csvFilePath = path.join(__dirname, 'data.csv');
+
     if (!fs.existsSync(csvFilePath)) {
         console.error('Критическая ошибка: Файл data.csv не найден!');
         return;
     }
+
     fs.createReadStream(csvFilePath)
         .pipe(csv())
         .on('data', (data) => results.push(data))
@@ -36,40 +37,17 @@ function loadData() {
         });
 }
 
-app.get('/api/data', (req, res) => {
-    res.json(cachedData);
+// Маршрут для проверки, что сервер работает
+app.get('/', (req, res) => {
+    res.send('API сервер для карты работает!');
 });
 
-app.get('/api/isolines', (req, res) => {
-    const { year, horizon, param, breaks } = req.query;
-
-    if (!year || !horizon || !param || !breaks) {
-        return res.status(400).json({ error: 'Недостаточно параметров для генерации изолиний' });
+// Основной маршрут для данных
+app.get('/api/data', (req, res) => {
+    if (cachedData.length === 0) {
+        return res.status(503).json({ error: "Данные еще не загружены, попробуйте через несколько секунд." });
     }
-    
-    const breakPoints = breaks.split(',').map(parseFloat);
-
-    const features = cachedData
-        .filter(p => String(p.date).split('/')[2] === year && String(p.horizon) === horizon && p[param] != null)
-        .map(p => turf.point([p.longitude, p.latitude], { [param]: p[param] }));
-
-    if (features.length < 3) {
-        return res.json({ type: 'FeatureCollection', features: [] });
-    }
-
-    try {
-        const tin = turf.tin({ type: 'FeatureCollection', features }, param);
-        const isolines = turf.isolines(tin, breakPoints, { zProperty: param });
-        
-        isolines.features.forEach(feature => {
-            feature.properties.value = feature.properties[param];
-        });
-
-        res.json(isolines);
-    } catch (error) {
-        console.error("Ошибка при генерации изолиний:", error.message);
-        res.status(500).json({ error: "Внутренняя ошибка сервера при генерации изолиний" });
-    }
+    res.json(cachedData);
 });
 
 app.listen(port, () => {
