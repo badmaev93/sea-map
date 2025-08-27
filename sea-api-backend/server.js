@@ -51,7 +51,6 @@ async function startServer() {
                 .map(p => turf.point([p.longitude, p.latitude]));
 
             if (validPoints.length > 0) {
-
                 const worldCoastlineFeature = {
                     "type": "Feature",
                     "properties": {},
