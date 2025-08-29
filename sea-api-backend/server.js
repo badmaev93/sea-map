@@ -4,19 +4,31 @@ const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
 const turf = require('@turf/turf');
+// Важно: убедитесь, что библиотека действительно экспортирует данные в таком формате
+// Если это CommonJS модуль, может понадобиться: const { data } = require('@geo-maps/...');
 const coastlineData = require('@geo-maps/countries-coastline-1m');
 
 const app = express();
 const port = process.env.PORT || 3000;
 app.use(cors());
 
-async function loadAndProcessData() {
+// --- КЭШ ---
+// Структура кэша: { '2023_10_temp_c': { isolines: GeoJSON, breaks: [...] } }
+const isolinesCache = new Map(); 
+
+/**
+ * Загружает и парсит CSV файл.
+ * @returns {Promise<Array<Object>>}
+ */
+function loadData() {
     return new Promise((resolve, reject) => {
         const results = [];
         const csvFilePath = path.join(__dirname, 'data.csv');
+        
         if (!fs.existsSync(csvFilePath)) {
             return reject(new Error(`Критическая ошибка: Файл data.csv не найден по пути ${csvFilePath}`));
         }
+
         fs.createReadStream(csvFilePath)
             .pipe(csv())
             .on('data', (data) => results.push(data))
@@ -30,7 +42,9 @@ async function loadAndProcessData() {
                     oxygen_mgl: parseFloat(row.oxygen_mgl),
                     ph: parseFloat(row.ph),
                     latitude: parseFloat(row.latitude),
-                    longitude: parseFloat(row.longitude)
+                    longitude: parseFloat(row.longitude),
+                    // Добавляем год для удобной фильтрации
+                    year: String(row.date).split('/')[2] 
                 }));
                 console.log(`Данные из CSV успешно загружены. Записей: ${processedData.length}`);
                 resolve(processedData);
@@ -38,145 +52,169 @@ async function loadAndProcessData() {
     });
 }
 
-async function startServer() {
+/**
+ * Подготавливает полигон береговой линии, обрезая его по области данных.
+ * @param {Array<Object>} dataPoints - Точки данных
+ * @returns {Object|null} - GeoJSON полигон или null
+ */
+function getLocalCoastline(dataPoints) {
+    console.log("Оптимизируем полигон береговой линии...");
+    const validPoints = dataPoints
+        .filter(p => isFinite(p.longitude) && isFinite(p.latitude))
+        .map(p => turf.point([p.longitude, p.latitude]));
+
+    if (validPoints.length === 0) {
+        console.error("В данных нет ни одной точки с корректными координатами.");
+        return null;
+    }
+
     try {
-        const cachedData = await loadAndProcessData();
+        // Упрощенная и более надежная логика для работы с разными форматами geojson
+        const worldCoastlineFeature = turf.feature(coastlineData.features[0].geometry);
         
-        let localCoastlinePolygon = null;
-        if (cachedData.length > 0) {
-            console.log("Оптимизируем полигон береговой линии...");
+        const dataBbox = turf.bbox(turf.featureCollection(validPoints));
+        // Увеличиваем буфер для надежности
+        const bufferedArea = turf.buffer(turf.bboxPolygon(dataBbox), 20, { units: 'kilometers' });
+        
+        const localCoastline = turf.intersect(worldCoastlineFeature, bufferedArea);
 
-            const validPoints = cachedData
-                .filter(p => isFinite(p.longitude) && isFinite(p.latitude))
-                .map(p => turf.point([p.longitude, p.latitude]));
-
-            if (validPoints.length > 0) {
-                try {
-                    // Debug: проверим структуру coastlineData
-                    console.log("Структура coastlineData:", typeof coastlineData, Array.isArray(coastlineData));
-                    
-                    let worldCoastlineFeature;
-                    
-                    // Попробуем разные варианты структуры данных
-                    if (Array.isArray(coastlineData) && coastlineData.length > 0) {
-                        // Если это массив, берем первый элемент
-                        if (coastlineData[0].type === 'Feature') {
-                            worldCoastlineFeature = coastlineData[0];
-                        } else if (coastlineData[0].type === 'FeatureCollection') {
-                            worldCoastlineFeature = coastlineData[0].features[0];
-                        } else {
-                            // Если это просто геометрия, оборачиваем в Feature
-                            worldCoastlineFeature = {
-                                "type": "Feature",
-                                "properties": {},
-                                "geometry": coastlineData[0]
-                            };
-                        }
-                    } else if (coastlineData.type === 'FeatureCollection') {
-                        // Если это FeatureCollection напрямую
-                        worldCoastlineFeature = coastlineData.features[0];
-                    } else if (coastlineData.type === 'Feature') {
-                        // Если это Feature напрямую
-                        worldCoastlineFeature = coastlineData;
-                    } else {
-                        // Если это просто геометрия
-                        worldCoastlineFeature = {
-                            "type": "Feature",
-                            "properties": {},
-                            "geometry": coastlineData
-                        };
-                    }
-
-                    // Проверим, что у нас есть валидная геометрия
-                    if (!worldCoastlineFeature || !worldCoastlineFeature.geometry || !worldCoastlineFeature.geometry.coordinates) {
-                        throw new Error("Не удалось извлечь валидную геометрию из coastlineData");
-                    }
-
-                    console.log("Тип геометрии береговой линии:", worldCoastlineFeature.geometry.type);
-
-                    const dataPoints = turf.featureCollection(validPoints);
-                    const dataBbox = turf.bbox(dataPoints);
-                    const bufferedArea = turf.buffer(turf.bboxPolygon(dataBbox), 10, { units: 'kilometers' });
-                    
-                    // Теперь turf.intersect получит правильные данные
-                    localCoastlinePolygon = turf.intersect(worldCoastlineFeature, bufferedArea);
-
-                    if (localCoastlinePolygon) {
-                        console.log("Полигон береговой линии успешно оптимизирован.");
-                    } else {
-                        console.warn("Не удалось оптимизировать полигон, возможно, данные далеко от берега.");
-                        localCoastlinePolygon = worldCoastlineFeature;
-                    }
-                } catch (coastlineError) {
-                    console.error("Ошибка при работе с береговой линией:", coastlineError.message);
-                    console.log("Продолжаем работу без оптимизации береговой линии...");
-                    localCoastlinePolygon = null;
-                }
-            } else {
-                console.error("В данных нет ни одной точки с корректными координатами.");
-            }
+        if (localCoastline) {
+            console.log("Полигон береговой линии успешно оптимизирован.");
+            return localCoastline;
+        } else {
+            console.warn("Не удалось оптимизировать полигон, возможно, данные далеко от берега. Будет использоваться полный полигон.");
+            return worldCoastlineFeature; // Возвращаем полный полигон как fallback
         }
-        
-        app.get('/', (req, res) => res.send('API сервер для карты работает!'));
-        app.get('/api/data', (req, res) => res.json(cachedData));
+    } catch (e) {
+        console.error("Критическая ошибка при обработке геометрии береговой линии:", e.message);
+        return null;
+    }
+}
 
-        app.get('/api/isolines', (req, res) => {
-            const { year, horizon, param, breaks } = req.query;
-            if (!year || !horizon || !param || !breaks) return res.status(400).json({ error: 'Недостаточно параметров' });
+
+/**
+ * Функция предварительного расчета и кэширования изолиний.
+ * @param {Array<Object>} allData - Все данные из CSV
+ * @param {Object|null} coastlinePolygon - Полигон для обрезки
+ */
+async function precomputeAndCacheIsolines(allData, coastlinePolygon) {
+    console.log("Начинаем предварительный расчет и кэширование изолиний...");
+    
+    const uniqueParams = new Set();
+    allData.forEach(p => {
+        // Собираем уникальные комбинации год-горизонт
+        if (p.year && p.horizon) {
+            uniqueParams.add(`${p.year}_${p.horizon}`);
+        }
+    });
+
+    const parameters = ['temp_c', 'salinity_psu', 'oxygen_mgl', 'ph'];
+
+    for (const combo of uniqueParams) {
+        const [year, horizon] = combo.split('_');
+        for (const param of parameters) {
+            const cacheKey = `${year}_${horizon}_${param}`;
             
-            try {
-                const breakPoints = breaks.split(',').map(parseFloat).filter(isFinite);
-                const features = cachedData
-                    .filter(p => String(p.date).split('/')[2] === year && String(p.horizon) === horizon && p[param] != null && isFinite(p[param]) && isFinite(p.longitude) && isFinite(p.latitude))
-                    .map(p => turf.point([p.longitude, p.latitude], { [param]: p[param] }));
+            const features = allData
+                .filter(p => p.year === year && String(p.horizon) === horizon && p[param] != null && isFinite(p[param]) && isFinite(p.longitude) && isFinite(p.latitude))
+                .map(p => turf.point([p.longitude, p.latitude], { [param]: p[param] }));
 
-                if (features.length < 3) return res.json({ type: 'FeatureCollection', features: [] });
-                
+            if (features.length < 3) {
+                // Недостаточно данных для построения, кэшируем пустой результат
+                isolinesCache.set(cacheKey, turf.featureCollection([]));
+                continue;
+            }
+
+            try {
+                // --- ОСНОВНЫЕ ВЫЧИСЛЕНИЯ ---
                 const pointCollection = turf.featureCollection(features);
+
+                // Опции для IDW. gridSize - ключевой параметр производительности!
+                const options = { gridSize: 0.2, property: param, units: 'kilometers', weight: 2 };
+                const grid = turf.idw(pointCollection, param, options);
+                
+                // Динамически определяем диапазоны для изолиний
                 const dataValues = features.map(f => f.properties[param]);
                 const dataMin = Math.min(...dataValues);
                 const dataMax = Math.max(...dataValues);
-                const validBreaks = breakPoints.filter(b => b > dataMin && b < dataMax);
+                // Генерируем 10 шагов между min и max
+                const breaks = Array.from({length: 10}, (_, i) => dataMin + (i * (dataMax - dataMin)) / 9);
 
-                if (validBreaks.length === 0) return res.json({ type: 'FeatureCollection', features: [] });
+                const rawIsolines = turf.isolines(grid, breaks, { zProperty: param });
 
-                const options = { gridSize: 0.1, property: param, units: 'kilometers', weight: 3 };
-                const grid = turf.idw(pointCollection, param, options);
-                const rawIsolines = turf.isolines(grid, validBreaks, { zProperty: param });
-
-                let clippedIsolines = [];
-                if (localCoastlinePolygon) {
-                    rawIsolines.features.forEach(line => {
+                let finalIsolines = rawIsolines;
+                if (coastlinePolygon) {
+                    const clippedFeatures = [];
+                     rawIsolines.features.forEach(line => {
                         try {
-                            const clippedLine = turf.difference(line, localCoastlinePolygon);
+                            const clippedLine = turf.difference(line, coastlinePolygon);
                             if (clippedLine) {
-                                clippedLine.properties = line.properties;
-                                clippedIsolines.push(clippedLine);
+                                clippedLine.properties = line.properties; // Копируем свойства
+                                clippedFeatures.push(clippedLine);
                             }
                         } catch (clipError) {
-                            console.warn("Ошибка при обрезке изолинии:", clipError.message);
-                            // Если обрезка не удалась, добавляем оригинальную линию
-                            clippedIsolines.push(line);
+                           // Если обрезка не удалась, добавляем оригинальную линию
+                           clippedFeatures.push(line);
                         }
                     });
-                } else {
-                    clippedIsolines = rawIsolines.features;
+                    finalIsolines = turf.featureCollection(clippedFeatures);
                 }
-                
-                const finalIsolines = turf.featureCollection(clippedIsolines);
+
                 finalIsolines.features.forEach(feature => {
                     feature.properties.value = feature.properties[param];
                 });
-                
-                res.json(finalIsolines);
+
+                isolinesCache.set(cacheKey, finalIsolines);
+
             } catch (error) {
-                console.error(`Ошибка при генерации изолиний для ${param}:`, error);
-                res.status(500).json({ error: "Ошибка на сервере при генерации изолиний", details: error.message });
+                console.error(`Ошибка при кэшировании ${cacheKey}:`, error.message);
+                isolinesCache.set(cacheKey, turf.featureCollection([])); // Кэшируем пустой результат при ошибке
+            }
+        }
+    }
+    console.log(`Предварительный расчет завершен. Записей в кэше: ${isolinesCache.size}`);
+}
+
+
+/**
+ * Главная функция запуска сервера
+ */
+async function startServer() {
+    try {
+        const allData = await loadData();
+        const localCoastline = getLocalCoastline(allData);
+
+        // Запускаем тяжелые вычисления в фоне, не блокируя старт сервера
+        precomputeAndCacheIsolines(allData, localCoastline).catch(err => {
+            console.error("Не удалось завершить кэширование:", err);
+        });
+        
+        app.get('/', (req, res) => res.send('API сервер для карты работает!'));
+        
+        // Этот эндпоинт теперь не нужен, если все данные передаются через кэш изолиний
+        // но оставим его для отладки
+        app.get('/api/data', (req, res) => res.json(allData));
+
+        app.get('/api/isolines', (req, res) => {
+            const { year, horizon, param } = req.query;
+            if (!year || !horizon || !param) {
+                return res.status(400).json({ error: 'Недостаточно параметров: требуются year, horizon, param' });
+            }
+            
+            const cacheKey = `${year}_${horizon}_${param}`;
+            
+            if (isolinesCache.has(cacheKey)) {
+                // Мгновенно отдаем результат из кэша
+                res.json(isolinesCache.get(cacheKey));
+            } else {
+                // Если по какой-то причине в кэше нет данных (например, расчет еще идет или не было данных)
+                res.status(404).json({ error: 'Данные для указанных параметров не найдены или еще не обработаны.' });
             }
         });
 
         app.listen(port, () => {
             console.log(`Сервер успешно запущен и слушает порт ${port}`);
+            console.log("Кэширование изолиний происходит в фоновом режиме.");
         });
 
     } catch (error) {
