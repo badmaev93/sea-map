@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Карта параметров моря</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #menu { 
+            position: absolute; background: #fff; padding: 10px; top: 10px; left: 10px; 
+            border-radius: 4px; z-index: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.2); max-width: 220px;
+        }
+        #menu h4 { margin: 15px 0 10px 0; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .layer-group button { 
+            display: block; width: 100%; margin-bottom: 5px; border: 1px solid #ccc; background: #f9f9f9; 
+            padding: 8px; cursor: pointer; text-align: left; 
+        }
+        .layer-group button:hover { background: #eee; }
+        .layer-group button.active { background: #3887be; color: white; border-color: #3887be; }
+        .controls { margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px; }
+        #menu fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 5px 5px 5px 5px; margin-bottom: 10px; }
+        #menu fieldset legend { font-size: 12px; font-weight: bold; padding: 0 5px; }
+        #menu label { font-size: 14px; }
+        #year-select { width: 100%; padding: 5px; }
+        #legend { 
+            position: absolute; background: rgba(255, 255, 255, 0.9); padding: 10px; bottom: 50px;
+            right: 10px; border-radius: 4px; z-index: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
+        }
+        .legend-key { display: inline-block; width: 15px; height: 15px; margin-right: 5px; vertical-align: middle; border: 1px solid #ccc; }
+        #legend h4 { margin: 0 0 10px 0; font-size: 14px; }
+        #legend div { margin-bottom: 5px; font-size: 12px; }
+        .mapboxgl-popup-content { font-size: 14px; padding: 10px; max-width: 280px; }
+        .mapboxgl-popup-content strong { color: #3887be; display: block; margin-bottom: 2px; }
+        .mapboxgl-popup-content .popup-subheader { color: #555; font-size: 13px; }
+        .mapboxgl-popup-content table { width: 100%; margin-top: 8px; border-collapse: collapse; }
+        .mapboxgl-popup-content td { padding: 3px 0; }
+        .mapboxgl-popup-content td:last-child { text-align: right; font-weight: bold; padding-left: 10px; }
+        
+        .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib { display: none !important; }
+        #custom-logo { position: absolute; bottom: 10px; left: 10px; z-index: 2; }
+        #custom-logo img { height: 80px; width: auto; }
+        #custom-attribution { position: absolute; bottom: 10px; right: 10px; z-index: 2; background-color: rgba(255, 255, 255, 0.7); padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+        #custom-attribution a { color: #333; text-decoration: none; }
+        #custom-attribution a:hover { text-decoration: underline; }
+
+        #loader {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.8); z-index: 10;
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            transition: opacity 0.3s ease;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3; border-top: 8px solid #3498db;
+            border-radius: 50%; width: 60px; height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        #loader p { margin-top: 20px; font-size: 16px; color: #555; text-align: center; padding: 0 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div id="loader"><div class="spinner"></div><p id="loader-text">Загрузка данных...</p></div>
+<div id="map"></div>
+<div id="custom-logo"><img src="https://raw.githubusercontent.com/badmaev93/sea-map/refs/heads/main/150_logo75.png" alt="ДВНИГМИ"></div>
+<div id="custom-attribution"><a href="https://www.mapbox.com/about/maps/" target="_blank">© Mapbox</a> | <a href="http://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap</a> | <a href="https://www.mapbox.com/feedback/" target="_blank">Обратная связь по карте</a></div>
+<div id="menu">
+    <fieldset><legend>Год</legend><select id="year-select"></select></fieldset>
+    <h4>Параметры</h4>
+    <div class="layer-group">
+        <button id="btn-oxygen-points" class="active" data-param="oxygen">Кислород</button>
+        <button id="btn-ph-points" data-param="ph">pH</button>
+        <button id="btn-temp-points" data-param="temp">Температура</button>
+        <button id="btn-salinity-points" data-param="salinity">Солёность</button>
+    </div>
+    <fieldset><legend>Горизонт</legend><input type="radio" id="horizon-surface" name="horizon" value="0" checked><label for="horizon-surface">Поверхность (0)</label><br><input type="radio" id="horizon-bottom" name="horizon" value="дно"><label for="horizon-bottom">Дно</label></fieldset>
+    <div class="controls"><input type="checkbox" id="show-labels"><label for="show-labels">Показывать подписи</label></div>
+</div>
+<div id="legend"></div>
+
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYm9sZWc5MzQiLCJhIjoiY2syY3pjeXFyMjN5aTNobzZmZGl5cng3aiJ9.ADhGQN0rFnGwPCk53capfQ';
+
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/light-v10',
+        center: [132.026960, 43.130572],
+        zoom: 8.95,
+        attributionControl: false
+    });
+
+    const config = {
+        scales: {
+            oxygen:   { title: 'Кислород, мг/л', prop: 'oxygen_mgl', format: 1, breaks: [6, 8, 10], bands: ['#f46d43', '#d9ef8b', '#a6d96a', '#66bd63'], sizeConfig: { base: 16 } },
+            ph:       { title: 'pH', prop: 'ph', format: 2, bands: ['#eff3ff', '#bdd7e7', '#6baed6'], sizeConfig: { base: 18 } },
+            temp:     { title: 'Температура, °C', prop: 'temp_c', format: 1, bands: ['#abd9e9', '#ffffbf', '#fee090', '#f46d43'], sizeConfig: { base: 16 } },
+            salinity: { title: 'Солёность, PSU', prop: 'salinity_psu', format: 2, bands: ['#ffffd9', '#a1dab4', '#41b6c4'], sizeConfig: { base: 17 } }
+        },
+        firstLabelLayerId: 'waterway-label'
+    };
+
+    let fullData = [];
+    let state = {
+        activeParam: 'oxygen',
+        showLabels: false,
+        horizon: '0',
+        year: null
+    };
+
+    // Форматирование числа с заменой точки на запятую
+    function formatNumber(value, decimalPlaces) {
+        if (typeof value !== 'number' || !isFinite(value)) return 'н/д';
+        return value.toFixed(decimalPlaces).replace('.', ',');
+    }
+
+    // Форматирование даты и времени в читаемый вид
+    function formatFullDateTime(dateStr, timeStr) {
+        if (!dateStr || !timeStr) return 'Нет данных';
+
+        const dateParts = String(dateStr).split('/');
+        const timeParts = String(timeStr).split(':');
+
+        if (dateParts.length !== 3 || timeParts.length < 2) return 'Неверный формат';
+
+        const [month, day, year] = dateParts;
+        const [hour, minute] = timeParts;
+
+        return `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.${year} ${hour}:${minute}`;
+    }
+
+    // Генерация динамических интервалов для данных
+    function generateDynamicBreaks(data, prop, numSteps) {
+        if (!data || data.length === 0) return [];
+
+        const values = data
+            .map(d => d.properties[prop])
+            .filter(v => typeof v === 'number' && isFinite(v));
+
+        if (values.length < 2) {
+            return values.length > 0 ? [values[0], values[0]] : [];
+        }
+
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+
+        if (min === max) return [min, max];
+
+        const step = (max - min) / numSteps;
+        return Array.from({length: numSteps + 1}, (_, i) =>
+            parseFloat((min + i * step).toFixed(2))
+        );
+    }
+
+    // Расчет границ для карты на основе точек
+    function calculateBounds(features) {
+        const bounds = new mapboxgl.LngLatBounds();
+        features.forEach(feature => {
+            bounds.extend(feature.geometry.coordinates);
+        });
+        return bounds;
+    }
+
+    // Расчет границ выбросов (outliers) методом IQR
+    function calculateOutlierBounds(values) {
+        if (!values || values.length < 4) return null;
+
+        const sorted = [...values].sort((a, b) => a - b);
+        const q1 = sorted[Math.floor(sorted.length * 0.25)];
+        const q3 = sorted[Math.floor(sorted.length * 0.75)];
+        const iqr = q3 - q1;
+
+        return {
+            lower: q1 - 1.5 * iqr,
+            upper: q3 + 1.5 * iqr
+        };
+    }
+
+    // Обновление легенды на карте
+    function updateLegend() {
+        const paramConfig = config.scales[state.activeParam];
+        if (!paramConfig) {
+            document.getElementById('legend').innerHTML = '';
+            return;
+        }
+
+        let content = `<h4>${paramConfig.title}</h4>`;
+        const breaks = paramConfig.breaks ||
+            (state.horizon === '0' ? paramConfig.surfaceBreaks : paramConfig.bottomBreaks);
+
+        if (state.activeParam === 'oxygen' && paramConfig.breaks) {
+            const bands = paramConfig.bands;
+            content += `<div><span class="legend-key" style="background-color: ${bands[0]}"></span>&lt; ${formatNumber(breaks[0], 1)} (гипоксия)</div>`;
+            content += `<div><span class="legend-key" style="background-color: ${bands[1]}"></span>${formatNumber(breaks[0], 1)} - ${formatNumber(breaks[1], 1)}</div>`;
+            content += `<div><span class="legend-key" style="background-color: ${bands[2]}"></span>${formatNumber(breaks[1], 1)} - ${formatNumber(breaks[2], 1)}</div>`;
+            content += `<div><span class="legend-key" style="background-color: ${bands[3]}"></span>&ge; ${formatNumber(breaks[2], 1)}</div>`;
+        } else {
+            if (!breaks || breaks.length < 2) {
+                document.getElementById('legend').innerHTML = content + 'Нет данных';
+                return;
+            }
+
+            for (let i = 0; i < paramConfig.bands.length; i++) {
+                if (breaks[i + 1]) {
+                    const start = formatNumber(breaks[i], paramConfig.format);
+                    const end = formatNumber(breaks[i + 1], paramConfig.format);
+                    content += `<div><span class="legend-key" style="background-color: ${paramConfig.bands[i]}"></span>${start} - ${end}</div>`;
+                }
+            }
+        }
+
+        document.getElementById('legend').innerHTML = content;
+    }
+    
+    function updateLayers() {
+        const yearFilteredFeatures = fullData.filter(f => String(f.properties.date).split('/')[2] === state.year);
+        const filteredFeatures = yearFilteredFeatures.filter(f => String(f.properties.horizon) === state.horizon);
+        const filteredGeoJSON = { type: 'FeatureCollection', features: filteredFeatures };
+        
+        const source = map.getSource('points-source');
+        if (source) {
+            source.setData(filteredGeoJSON);
+        }
+
+        Object.keys(config.scales).forEach(param => {
+            const is_active = (param === state.activeParam);
+            const showLabels = is_active && state.showLabels;
+            const pointLayerId = `${param}-points-layer`;
+            const labelLayerId = `${param}-labels-layer`;
+
+            if (is_active) {
+                const paramConfig = config.scales[param];
+                const breaks = paramConfig.breaks || (state.horizon === '0' ? paramConfig.surfaceBreaks : paramConfig.bottomBreaks);
+                
+                let colorExpression = '#cccccc';
+                if (breaks && breaks.length > 1) {
+                    if (paramConfig.breaks) {
+                        const colorStops = paramConfig.breaks.flatMap((val, i) => [val, paramConfig.bands[i + 1]]);
+                        colorExpression = ['step', ['get', paramConfig.prop], paramConfig.bands[0], ...colorStops];
+                    } else {
+                        const colorStops = [];
+                        for (let i = 1; i < paramConfig.bands.length; i++) { colorStops.push(breaks[i], paramConfig.bands[i]); }
+                        colorExpression = ['step', ['get', paramConfig.prop], paramConfig.bands[0], ...colorStops];
+                    }
+                }
+                map.setPaintProperty(pointLayerId, 'circle-color', colorExpression);
+
+                // --- ЛОГИКА ВЫДЕЛЕНИЯ ВЫБРОСОВ ---
+                const outlierBounds = state.horizon === '0' ? paramConfig.surfaceOutlierBounds : paramConfig.bottomOutlierBounds;
+                let radiusExpression = paramConfig.sizeConfig.base;
+                if (outlierBounds) {
+                    radiusExpression = [
+                        'case',
+                        ['any',
+                            ['<', ['get', paramConfig.prop], outlierBounds.lower],
+                            ['>', ['get', paramConfig.prop], outlierBounds.upper]
+                        ],
+                        paramConfig.sizeConfig.base * 1.6,
+                        paramConfig.sizeConfig.base
+                    ];
+                }
+                map.setPaintProperty(pointLayerId, 'circle-radius', radiusExpression);
+            }
+
+            if (map.getLayer(pointLayerId)) {
+                map.setLayoutProperty(pointLayerId, 'visibility', is_active ? 'visible' : 'none');
+            }
+            if (map.getLayer(labelLayerId)) {
+                map.setLayoutProperty(labelLayerId, 'visibility', showLabels ? 'visible' : 'none');
+            }
+        });
+
+        updateLegend();
+    }
+
+    // Настройка элементов управления
+    function setupControls(years) {
+        const yearSelect = document.getElementById('year-select');
+        yearSelect.innerHTML = '';
+
+        years.forEach(year => {
+            yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+        });
+
+        yearSelect.value = state.year;
+        yearSelect.addEventListener('change', (e) => {
+            state.year = e.target.value;
+            updateLayers();
+        });
+
+        document.querySelectorAll('.layer-group button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                document.querySelectorAll('.layer-group button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                state.activeParam = e.target.dataset.param;
+                updateLayers();
+            });
+        });
+
+        document.querySelectorAll('input[name="horizon"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                state.horizon = e.target.value;
+                updateLayers();
+            });
+        });
+
+        document.getElementById('show-labels').addEventListener('change', (e) => {
+            state.showLabels = e.target.checked;
+            updateLayers();
+        });
+    }
+
+    // Функция загрузки с повторными попытками
+    async function fetchWithRetries(url, retries = 3, delay = 5000) {
+        const loaderText = document.getElementById('loader-text');
+
+        for (let i = 0; i < retries; i++) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return response;
+            } catch (error) {
+                console.warn(`Attempt ${i + 1} failed. Retrying in ${delay / 1000}s...`);
+
+                if (i === 0 && loaderText) {
+                    loaderText.innerHTML = "Сервер запускается, это может занять до минуты...<br>Пожалуйста, подождите.";
+                }
+
+                if (i === retries - 1) throw error;
+
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+
+    // Инициализация карты и загрузка данных
+    async function initializeMap() {
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loader-text');
+
+        try {
+            const response = await fetchWithRetries('https://sea-data-api.onrender.com/api/data');
+            const rawData = await response.json();
+            const validData = rawData.filter(p => p.longitude != null && p.latitude != null);
+
+            validData.forEach(p => {
+                p.datetime_full_formatted = formatFullDateTime(p.date, p.time);
+                p.oxygen_mgl_formatted = formatNumber(p.oxygen_mgl, 1);
+                p.temp_c_formatted = formatNumber(p.temp_c, 1);
+                p.ph_formatted = formatNumber(p.ph, 2);
+                p.salinity_psu_formatted = formatNumber(p.salinity_psu, 2);
+            });
+
+            fullData = validData.map(p => ({
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] },
+                properties: p
+            }));
+
+            // Расчет динамических интервалов и границ выбросов
+            Object.entries(config.scales).forEach(([param, paramConfig]) => {
+                if (!paramConfig.breaks) {
+                    const surfaceData = fullData.filter(f => String(f.properties.horizon) === '0');
+                    paramConfig.surfaceBreaks = generateDynamicBreaks(surfaceData, paramConfig.prop, paramConfig.bands.length);
+                    paramConfig.surfaceOutlierBounds = calculateOutlierBounds(surfaceData.map(f => f.properties[paramConfig.prop]));
+
+                    const bottomData = fullData.filter(f => String(f.properties.horizon) === 'дно');
+                    paramConfig.bottomBreaks = generateDynamicBreaks(bottomData, paramConfig.prop, paramConfig.bands.length);
+                    paramConfig.bottomOutlierBounds = calculateOutlierBounds(bottomData.map(f => f.properties[paramConfig.prop]));
+                }
+            });
+
+            // Установка границ карты
+            if (fullData.length > 0) {
+                const bounds = calculateBounds(fullData);
+                map.fitBounds(bounds, { padding: 50, duration: 0 });
+
+                const sw = bounds.getSouthWest();
+                const ne = bounds.getNorthEast();
+                const lngDiff = ne.lng - sw.lng;
+                const latDiff = ne.lat - sw.lat;
+                const padding = 0.2;
+
+                const paddedBounds = new mapboxgl.LngLatBounds(
+                    [sw.lng - lngDiff * padding, sw.lat - latDiff * padding],
+                    [ne.lng + lngDiff * padding, ne.lat + latDiff * padding]
+                );
+                map.setMaxBounds(paddedBounds);
+            }
+
+            const years = [...new Set(validData.map(p => String(p.date).split('/')[2]))].sort((a, b) => b - a);
+            if (years.length > 0) {
+                state.year = years[0];
+            }
+
+            map.addSource('points-source', {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features: [] }
+            });
+
+            // Добавление слоев точек и подписей
+            Object.entries(config.scales).forEach(([param, scale]) => {
+                map.addLayer({
+                    id: `${param}-points-layer`,
+                    type: 'circle',
+                    source: 'points-source',
+                    layout: { visibility: 'none' },
+                    paint: {
+                        'circle-color': '#cccccc',
+                        'circle-stroke-width': 1.5,
+                        'circle-stroke-color': '#fff',
+                        'circle-radius': scale.sizeConfig.base
+                    }
+                }, config.firstLabelLayerId);
+
+                map.addLayer({
+                    id: `${param}-labels-layer`,
+                    type: 'symbol',
+                    source: 'points-source',
+                    layout: {
+                        visibility: 'none',
+                        'text-field': ['get', `${scale.prop}_formatted`],
+                        'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+                        'text-size': 10.5,
+                        'text-offset': [0, 0],
+                        'text-allow-overlap': true,
+                        'text-ignore-placement': true
+                    },
+                    paint: {
+                        'text-color': '#ffffff',
+                        'text-halo-color': 'rgba(0, 0, 0, 0.85)',
+                        'text-halo-width': 1.2,
+                        'text-halo-blur': 0
+                    }
+                }, config.firstLabelLayerId);
+            });
+
+            setupControls(years);
+
+            // Обработчики событий для всплывающих окон
+            Object.keys(config.scales).forEach(param => {
+                map.on('click', `${param}-points-layer`, (e) => {
+                    const props = e.features[0].properties;
+                    const popupHTML = `
+                        <strong>Станция ${props.station_id}</strong>
+                        <div class="popup-subheader">${props.bay}</div>
+                        <div>Горизонт: ${props.horizon}</div>
+                        <div>Дата: ${props.datetime_full_formatted}</div>
+                        <table>
+                            <tr><td>Температура:</td><td>${props.temp_c_formatted}°C</td></tr>
+                            <tr><td>Солёность:</td><td>${props.salinity_psu_formatted} PSU</td></tr>
+                            <tr><td>Кислород:</td><td>${props.oxygen_mgl_formatted} мг/л</td></tr>
+                            <tr><td>pH:</td><td>${props.ph_formatted}</td></tr>
+                        </table>
+                    `;
+                    new mapboxgl.Popup()
+                        .setLngLat(e.lngLat)
+                        .setHTML(popupHTML)
+                        .addTo(map);
+                });
+
+                map.on('mouseenter', `${param}-points-layer`, () => {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+
+                map.on('mouseleave', `${param}-points-layer`, () => {
+                    map.getCanvas().style.cursor = '';
+                });
+            });
+
+            updateLayers();
+
+            loader.style.opacity = 0;
+            setTimeout(() => { loader.style.display = 'none'; }, 300);
+
+        } catch (error) {
+            console.error("Не удалось загрузить данные для карты:", error);
+            if (loaderText) {
+                loader.querySelector('.spinner').style.display = 'none';
+                loaderText.innerHTML = "Ошибка при загрузке данных.<br>Пожалуйста, обновите страницу.";
+            }
+        }
+    }
+
+    map.on('load', () => {
+        map.setLanguage('ru');
+        initializeMap();
+    });
+</script>
+
+</body>
+</html>
