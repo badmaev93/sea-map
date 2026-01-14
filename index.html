@@ -7,6 +7,7 @@
 
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; }
@@ -112,13 +113,11 @@
         year: null
     };
 
-    // Форматирование числа с заменой точки на запятую
     function formatNumber(value, decimalPlaces) {
         if (typeof value !== 'number' || !isFinite(value)) return 'н/д';
         return value.toFixed(decimalPlaces).replace('.', ',');
     }
 
-    // Форматирование даты и времени в читаемый вид
     function formatFullDateTime(dateStr, timeStr) {
         if (!dateStr || !timeStr) return 'Нет данных';
 
@@ -133,7 +132,6 @@
         return `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.${year} ${hour}:${minute}`;
     }
 
-    // Генерация динамических интервалов для данных
     function generateDynamicBreaks(data, prop, numSteps) {
         if (!data || data.length === 0) return [];
 
@@ -156,7 +154,6 @@
         );
     }
 
-    // Расчет границ для карты на основе точек
     function calculateBounds(features) {
         const bounds = new mapboxgl.LngLatBounds();
         features.forEach(feature => {
@@ -165,7 +162,6 @@
         return bounds;
     }
 
-    // Расчет границ выбросов (outliers) методом IQR
     function calculateOutlierBounds(values) {
         if (!values || values.length < 4) return null;
 
@@ -180,7 +176,6 @@
         };
     }
 
-    // Обновление легенды на карте
     function updateLegend() {
         const paramConfig = config.scales[state.activeParam];
         if (!paramConfig) {
@@ -249,7 +244,6 @@
                 }
                 map.setPaintProperty(pointLayerId, 'circle-color', colorExpression);
 
-                // --- ЛОГИКА ВЫДЕЛЕНИЯ ВЫБРОСОВ ---
                 const outlierBounds = state.horizon === '0' ? paramConfig.surfaceOutlierBounds : paramConfig.bottomOutlierBounds;
                 let radiusExpression = paramConfig.sizeConfig.base;
                 if (outlierBounds) {
@@ -277,7 +271,6 @@
         updateLegend();
     }
 
-    // Настройка элементов управления
     function setupControls(years) {
         const yearSelect = document.getElementById('year-select');
         yearSelect.innerHTML = '';
@@ -314,7 +307,6 @@
         });
     }
 
-    // Функция загрузки с повторными попытками
     async function fetchWithRetries(url, retries = 3, delay = 5000) {
         const loaderText = document.getElementById('loader-text');
 
@@ -345,7 +337,6 @@
         }
     }
 
-    // Инициализация карты и загрузка данных
     async function initializeMap() {
         const loader = document.getElementById('loader');
         const loaderText = document.getElementById('loader-text');
@@ -369,7 +360,6 @@
                 properties: p
             }));
 
-            // Расчет динамических интервалов и границ выбросов
             Object.entries(config.scales).forEach(([param, paramConfig]) => {
                 if (!paramConfig.breaks) {
                     const surfaceData = fullData.filter(f => String(f.properties.horizon) === '0');
@@ -382,7 +372,6 @@
                 }
             });
 
-            // Установка границ карты
             if (fullData.length > 0) {
                 const bounds = calculateBounds(fullData);
                 map.fitBounds(bounds, { padding: 50, duration: 0 });
@@ -410,7 +399,6 @@
                 data: { type: 'FeatureCollection', features: [] }
             });
 
-            // Добавление слоев точек и подписей
             Object.entries(config.scales).forEach(([param, scale]) => {
                 map.addLayer({
                     id: `${param}-points-layer`,
@@ -449,7 +437,6 @@
 
             setupControls(years);
 
-            // Обработчики событий для всплывающих окон
             Object.keys(config.scales).forEach(param => {
                 map.on('click', `${param}-points-layer`, (e) => {
                     const props = e.features[0].properties;
