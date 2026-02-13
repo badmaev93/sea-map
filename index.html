@@ -71,7 +71,11 @@
         #loader p { margin-top: 20px; font-size: 15px; color: #666; text-align: center; padding: 0 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #timeline-container { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 60%; max-width: 800px; background: rgba(255,255,255,0.3); backdrop-filter: blur(8px); border-radius: 20px; padding: 8px 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.2); z-index: 1; border: 1px solid rgba(255,255,255,0.5); }
-        #timeline-slider { width: 100%; height: 4px; border-radius: 2px; background: linear-gradient(to right, #3887be 0%, rgba(255,255,255,0.4) 0%); outline: none; -webkit-appearance: none; cursor: pointer; }
+        #timeline-zones { position: absolute; left: 16px; right: 16px; top: 8px; height: 4px; border-radius: 2px; overflow: hidden; pointer-events: none; }
+        .timeline-zone { position: absolute; height: 100%; top: 0; }
+        .timeline-zone.spring { background: rgba(144, 238, 144, 0.4); }
+        .timeline-zone.autumn { background: rgba(255, 200, 124, 0.4); }
+        #timeline-slider { width: 100%; height: 4px; border-radius: 2px; background: transparent; outline: none; -webkit-appearance: none; cursor: pointer; position: relative; z-index: 1; }
         #timeline-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #3887be; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         #timeline-slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #3887be; cursor: pointer; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         #timeline-label { text-align: center; font-size: 11px; font-weight: 600; color: #1a1a2e; margin-top: 4px; text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
@@ -102,11 +106,13 @@
 </div>
 <div id="legend"></div>
 <div id="timeline-container">
+    <div id="timeline-zones"></div>
     <input type="range" id="timeline-slider" min="0" max="100" value="0">
     <div id="timeline-label"></div>
 </div>
 <div id="charts-panel" style="display: none;">
     <h4 id="charts-title">Временные ряды</h4>
+    <div class="chart-container"><h5 id="param-chart-title">Кислород, мг/л</h5><div class="chart-wrapper"><canvas id="param-chart"></canvas></div></div>
     <div class="chart-container"><h5>Температура, °C</h5><div class="chart-wrapper"><canvas id="temp-chart"></canvas></div></div>
     <div class="chart-container"><h5>Солёность, PSU</h5><div class="chart-wrapper"><canvas id="salinity-chart"></canvas></div></div>
 </div>
@@ -115,7 +121,7 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoiYm9sZWc5MzQiLCJhIjoiY2syY3pjeXFyMjN5aTNobzZmZGl5cng3aiJ9.ADhGQN0rFnGwPCk53capfQ';
 const map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/light-v10', center: [132.026960, 43.130572], zoom: 8.95, attributionControl: false, preserveDrawingBuffer: true });
 const config = { scales: { oxygen: { title: 'Кислород, мг/л', prop: 'oxygen_mgl', format: 1, breaks: [6, 8, 10], bands: ['#f46d43', '#d9ef8b', '#a6d96a', '#66bd63'], sizeConfig: { base: 16 } }, ph: { title: 'pH', prop: 'ph', format: 2, bands: ['#eff3ff', '#bdd7e7', '#6baed6'], sizeConfig: { base: 18 } } }, firstLabelLayerId: 'waterway-label' };
-let tempChart = null, salinityChart = null, fullData = [];
+let paramChart = null, tempChart = null, salinityChart = null, fullData = [];
 let state = { activeParam: 'oxygen', showLabels: false, horizon: '0', year: null, season: 'spring', selectedStation: null };
 let timelineDates = [];
 let timelineIndex = 0;
@@ -161,22 +167,27 @@ function updateCharts() {
         datetime: parseDateTime(f.properties.date, f.properties.time),
         temp: f.properties.temp_c,
         salinity: f.properties.salinity_psu,
+        oxygen: f.properties.oxygen_mgl,
+        ph: f.properties.ph,
         station: f.properties.station_id,
         year: String(f.properties.date).split('/')[2],
         season: getSeason(f.properties.date),
         date: f.properties.date
     })).filter(d => d.datetime !== null).sort((a, b) => a.datetime - b.datetime);
 
+    const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
     const labels = dataPoints.map(d => {
+        const month = monthNames[d.datetime.getMonth()];
         const day = String(d.datetime.getDate()).padStart(2, '0');
-        const month = String(d.datetime.getMonth() + 1).padStart(2, '0');
-        const year = d.datetime.getFullYear();
-        return `${day}.${month}.${year}`;
+        return `${day} ${month}`;
     });
 
-    const pointColors = dataPoints.map(d => {
+    const uniqueYears = [...new Set(dataPoints.map(d => d.year))];
+    const yearLabel = uniqueYears.length === 1 ? uniqueYears[0] : `${uniqueYears[0]}-${uniqueYears[uniqueYears.length-1]}`;
+
+    const createPointColors = (lineColor) => dataPoints.map(d => {
         const isCurrent = d.year === state.year && d.season === state.season;
-        if (isCurrent) return 'rgba(255, 99, 132, 0.8)';
+        if (isCurrent) return lineColor;
         return d.season === 'spring' ? 'rgba(144, 238, 144, 0.3)' : 'rgba(255, 200, 124, 0.3)';
     });
 
@@ -185,17 +196,27 @@ function updateCharts() {
         return isCurrent ? 7 : 3;
     });
 
-    const chartOptions = {
+    const createChartOptions = (title) => ({
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: { display: false },
+            title: {
+                display: true,
+                text: `Год: ${yearLabel}`,
+                font: { size: 10, weight: 'normal' },
+                color: '#999',
+                align: 'end',
+                padding: { bottom: 5 }
+            },
             tooltip: {
                 callbacks: {
                     title: (items) => {
                         const idx = items[0].dataIndex;
                         const seasonText = dataPoints[idx].season === 'spring' ? 'Весна' : 'Осень';
-                        return `${labels[idx]}\n${dataPoints[idx].year}, ${seasonText}`;
+                        const month = String(dataPoints[idx].datetime.getMonth() + 1).padStart(2, '0');
+                        const day = String(dataPoints[idx].datetime.getDate()).padStart(2, '0');
+                        return `${day}.${month}.${dataPoints[idx].year} (${seasonText})`;
                     }
                 }
             }
@@ -214,10 +235,33 @@ function updateCharts() {
             point: { hoverRadius: 5 },
             line: { tension: 0.3, borderWidth: 2 }
         }
-    };
+    });
 
+    if (paramChart) paramChart.destroy();
     if (tempChart) tempChart.destroy();
     if (salinityChart) salinityChart.destroy();
+
+    const paramConfig = config.scales[state.activeParam];
+    document.getElementById('param-chart-title').textContent = paramConfig.title;
+    const paramData = dataPoints.map(d => state.activeParam === 'oxygen' ? d.oxygen : d.ph);
+    const paramColor = state.activeParam === 'oxygen' ? '#f46d43' : '#6baed6';
+
+    paramChart = new Chart(document.getElementById('param-chart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                data: paramData,
+                borderColor: paramColor,
+                backgroundColor: `${paramColor}20`,
+                fill: true,
+                pointBackgroundColor: createPointColors(paramColor),
+                pointBorderColor: createPointColors(paramColor),
+                pointRadius: pointRadius
+            }]
+        },
+        options: createChartOptions(paramConfig.title)
+    });
 
     tempChart = new Chart(document.getElementById('temp-chart').getContext('2d'), {
         type: 'line',
@@ -225,15 +269,15 @@ function updateCharts() {
             labels,
             datasets: [{
                 data: dataPoints.map(d => d.temp),
-                borderColor: '#f46d43',
-                backgroundColor: 'rgba(244,109,67,0.1)',
+                borderColor: '#ff7f0e',
+                backgroundColor: 'rgba(255, 127, 14, 0.1)',
                 fill: true,
-                pointBackgroundColor: pointColors,
-                pointBorderColor: pointColors,
+                pointBackgroundColor: createPointColors('#ff7f0e'),
+                pointBorderColor: createPointColors('#ff7f0e'),
                 pointRadius: pointRadius
             }]
         },
-        options: chartOptions
+        options: createChartOptions('Температура')
     });
 
     salinityChart = new Chart(document.getElementById('salinity-chart').getContext('2d'), {
@@ -245,12 +289,12 @@ function updateCharts() {
                 borderColor: '#41b6c4',
                 backgroundColor: 'rgba(65,182,196,0.1)',
                 fill: true,
-                pointBackgroundColor: pointColors,
-                pointBorderColor: pointColors,
+                pointBackgroundColor: createPointColors('#41b6c4'),
+                pointBorderColor: createPointColors('#41b6c4'),
                 pointRadius: pointRadius
             }]
         },
-        options: chartOptions
+        options: createChartOptions('Солёность')
     });
 }
 
@@ -307,6 +351,18 @@ function buildTimeline() {
         state.season = current.season;
         updateTimelineLabel();
     }
+
+    const zonesContainer = document.getElementById('timeline-zones');
+    zonesContainer.innerHTML = '';
+    timelineDates.forEach((date, index) => {
+        const zone = document.createElement('div');
+        zone.className = `timeline-zone ${date.season}`;
+        const left = (index / timelineDates.length) * 100;
+        const width = (1 / timelineDates.length) * 100;
+        zone.style.left = `${left}%`;
+        zone.style.width = `${width}%`;
+        zonesContainer.appendChild(zone);
+    });
 }
 
 function updateTimelineLabel() {
