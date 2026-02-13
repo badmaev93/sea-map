@@ -71,16 +71,13 @@
         #loader p { margin-top: 20px; font-size: 15px; color: #666; text-align: center; padding: 0 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #timeline-container { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 60%; max-width: 800px; background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.25)); backdrop-filter: blur(12px); border-radius: 24px; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.6) inset; z-index: 1; }
-        #timeline-zones { position: absolute; left: 20px; right: 20px; top: 12px; height: 6px; border-radius: 3px; overflow: hidden; pointer-events: none; }
-        .timeline-zone { position: absolute; height: 100%; top: 0; transition: opacity 0.2s; }
-        .timeline-zone.spring { background: linear-gradient(90deg, rgba(144, 238, 144, 0.5), rgba(144, 238, 144, 0.3)); }
-        .timeline-zone.autumn { background: linear-gradient(90deg, rgba(255, 200, 124, 0.5), rgba(255, 200, 124, 0.3)); }
-        #timeline-slider { width: 100%; height: 6px; border-radius: 3px; background: transparent; outline: none; -webkit-appearance: none; cursor: pointer; position: relative; z-index: 1; }
+        #timeline-zones { position: absolute; left: 20px; right: 20px; top: 12px; height: 6px; border-radius: 3px; pointer-events: none; }
+        #timeline-slider { width: 100%; height: 6px; border-radius: 3px; background: rgba(200, 200, 200, 0.3); outline: none; -webkit-appearance: none; cursor: pointer; position: relative; z-index: 1; }
         #timeline-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,255,255,0.8); transition: transform 0.1s; }
         #timeline-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
         #timeline-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); cursor: pointer; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
         #timeline-label { text-align: center; font-size: 12px; font-weight: 700; color: #1a1a2e; margin-top: 8px; text-shadow: 0 1px 3px rgba(255,255,255,0.9); letter-spacing: 0.3px; }
-        .timeline-tick { position: absolute; width: 1px; height: 10px; background: rgba(0,0,0,0.2); top: -2px; pointer-events: none; }
+        .timeline-tick { position: absolute; width: 2px; height: 14px; background: rgba(0,0,0,0.35); top: -4px; pointer-events: none; border-radius: 1px; }
         @media (max-width: 900px) { #charts-panel { display: none; } #timeline-container { width: 80%; } }
         @media (max-width: 600px) { #menu { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; border-radius: 0; transform: translateX(-100%); overflow-y: auto; transition: transform 0.2s ease; } #menu.open { transform: translateX(0); } #menu-toggle { display: flex; } #menu-close { display: flex; } #legend { bottom: 100px; right: 10px; left: 10px; } }
     </style>
@@ -443,20 +440,11 @@ function buildTimeline() {
     const zonesContainer = document.getElementById('timeline-zones');
     zonesContainer.innerHTML = '';
     timelineDates.forEach((date, index) => {
-        const zone = document.createElement('div');
-        zone.className = `timeline-zone ${date.season}`;
-        const left = (index / timelineDates.length) * 100;
-        const width = (1 / timelineDates.length) * 100;
-        zone.style.left = `${left}%`;
-        zone.style.width = `${width}%`;
-        zonesContainer.appendChild(zone);
-
-        if (index > 0 && index % Math.ceil(timelineDates.length / 10) === 0) {
-            const tick = document.createElement('div');
-            tick.className = 'timeline-tick';
-            tick.style.left = `${left}%`;
-            zonesContainer.appendChild(tick);
-        }
+        const tick = document.createElement('div');
+        tick.className = 'timeline-tick';
+        const left = (index / (timelineDates.length - 1)) * 100;
+        tick.style.left = `${left}%`;
+        zonesContainer.appendChild(tick);
     });
 }
 
@@ -465,7 +453,7 @@ function updateTimelineLabel() {
     document.getElementById('timeline-label').textContent = current.label;
     const slider = document.getElementById('timeline-slider');
     const percent = (timelineIndex / (timelineDates.length - 1)) * 100;
-    slider.style.background = `linear-gradient(to right, #3887be ${percent}%, rgba(255,255,255,0.4) ${percent}%)`;
+    slider.style.background = `linear-gradient(to right, #3887be ${percent}%, rgba(200, 200, 200, 0.3) ${percent}%)`;
 }
 
 function onTimelineChange(newIndex) {
