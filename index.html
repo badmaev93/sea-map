@@ -188,7 +188,17 @@ function updateCharts() {
     const createPointColors = (lineColor) => dataPoints.map(d => {
         const isCurrent = d.year === state.year && d.season === state.season;
         if (isCurrent) return lineColor;
-        return d.season === 'spring' ? 'rgba(144, 238, 144, 0.3)' : 'rgba(255, 200, 124, 0.3)';
+
+        const horizon = String(filteredFeatures.find(f =>
+            String(f.properties.date).split('/')[2] === d.year &&
+            getSeason(f.properties.date) === d.season
+        )?.properties.horizon || state.horizon);
+
+        if (d.season === 'spring') {
+            return horizon === '0' ? 'rgba(144, 238, 144, 0.5)' : 'rgba(34, 139, 34, 0.5)';
+        } else {
+            return horizon === '0' ? 'rgba(255, 200, 124, 0.5)' : 'rgba(255, 140, 0, 0.5)';
+        }
     });
 
     const pointRadius = dataPoints.map(d => {
@@ -196,19 +206,67 @@ function updateCharts() {
         return isCurrent ? 7 : 3;
     });
 
-    const createChartOptions = (title) => ({
+    const yearSeparators = [];
+    let currentYear = dataPoints[0]?.year;
+    dataPoints.forEach((d, idx) => {
+        if (d.year !== currentYear && idx > 0) {
+            yearSeparators.push({ index: idx, year: currentYear, nextYear: d.year });
+            currentYear = d.year;
+        }
+    });
+
+    const yearLabelsPlugin = {
+        id: 'yearLabels',
+        afterDraw: (chart) => {
+            const ctx = chart.ctx;
+            const chartArea = chart.chartArea;
+            const xScale = chart.scales.x;
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+
+            yearSeparators.forEach(sep => {
+                const x = xScale.getPixelForValue(sep.index);
+                ctx.beginPath();
+                ctx.moveTo(x, chartArea.top);
+                ctx.lineTo(x, chartArea.bottom);
+                ctx.stroke();
+            });
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            let startIdx = 0;
+            yearSeparators.forEach(sep => {
+                const endIdx = sep.index;
+                const centerIdx = (startIdx + endIdx) / 2;
+                const x = xScale.getPixelForValue(centerIdx);
+                ctx.fillText(sep.year, x, chartArea.bottom + 25);
+                startIdx = endIdx;
+            });
+
+            if (dataPoints.length > 0) {
+                const lastYear = dataPoints[dataPoints.length - 1].year;
+                const centerIdx = (startIdx + dataPoints.length - 1) / 2;
+                const x = xScale.getPixelForValue(centerIdx);
+                ctx.fillText(lastYear, x, chartArea.bottom + 25);
+            }
+
+            ctx.restore();
+        }
+    };
+
+    const createChartOptions = () => ({
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: { display: false },
-            title: {
-                display: true,
-                text: `Год: ${yearLabel}`,
-                font: { size: 10, weight: 'normal' },
-                color: '#999',
-                align: 'end',
-                padding: { bottom: 5 }
-            },
+            yearLabels: {},
             tooltip: {
                 callbacks: {
                     title: (items) => {
@@ -216,7 +274,8 @@ function updateCharts() {
                         const seasonText = dataPoints[idx].season === 'spring' ? 'Весна' : 'Осень';
                         const month = String(dataPoints[idx].datetime.getMonth() + 1).padStart(2, '0');
                         const day = String(dataPoints[idx].datetime.getDate()).padStart(2, '0');
-                        return `${day}.${month}.${dataPoints[idx].year} (${seasonText})`;
+                        const horizonText = state.horizon === '0' ? 'Поверхность' : 'Дно';
+                        return `${day}.${month}.${dataPoints[idx].year} (${seasonText}, ${horizonText})`;
                     }
                 }
             }
@@ -260,7 +319,8 @@ function updateCharts() {
                 pointRadius: pointRadius
             }]
         },
-        options: createChartOptions(paramConfig.title)
+        options: createChartOptions(),
+        plugins: [yearLabelsPlugin]
     });
 
     tempChart = new Chart(document.getElementById('temp-chart').getContext('2d'), {
@@ -277,7 +337,8 @@ function updateCharts() {
                 pointRadius: pointRadius
             }]
         },
-        options: createChartOptions('Температура')
+        options: createChartOptions(),
+        plugins: [yearLabelsPlugin]
     });
 
     salinityChart = new Chart(document.getElementById('salinity-chart').getContext('2d'), {
@@ -294,7 +355,8 @@ function updateCharts() {
                 pointRadius: pointRadius
             }]
         },
-        options: createChartOptions('Солёность')
+        options: createChartOptions(),
+        plugins: [yearLabelsPlugin]
     });
 }
 
