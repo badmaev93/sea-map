@@ -136,7 +136,8 @@ function updateLegend() {
     const paramConfig = config.scales[state.activeParam];
     if (!paramConfig) { document.getElementById('legend').innerHTML = ''; return; }
     let content = `<h4>${paramConfig.title}</h4>`;
-    const breaks = paramConfig.breaks || (state.horizon === '0' ? paramConfig.surfaceBreaks : paramConfig.bottomBreaks);
+    const key = `${state.season}_${state.horizon}`;
+    const breaks = paramConfig.breaks || paramConfig.seasonHorizonBreaks?.[key];
     if (state.activeParam === 'oxygen' && paramConfig.breaks) {
         const bands = paramConfig.bands;
         content += `<div><span class="legend-key" style="background:${bands[0]}"></span>&lt; ${formatNumber(breaks[0], 1)}</div>`;
@@ -371,11 +372,12 @@ function updateLayers() {
         const pointLayerId = `${param}-points-layer`; const labelLayerId = `${param}-labels-layer`;
         if (isActive) {
             const paramConfig = config.scales[param];
-            const breaks = paramConfig.breaks || (state.horizon === '0' ? paramConfig.surfaceBreaks : paramConfig.bottomBreaks);
+            const key = `${state.season}_${state.horizon}`;
+            const breaks = paramConfig.breaks || paramConfig.seasonHorizonBreaks?.[key];
             let colorExpression = '#cccccc';
             if (breaks && breaks.length > 1) { const colorStops = paramConfig.breaks ? paramConfig.breaks.flatMap((val, i) => [val, paramConfig.bands[i + 1]]) : breaks.slice(1).flatMap((val, i) => [val, paramConfig.bands[i + 1]]); colorExpression = ['step', ['get', paramConfig.prop], paramConfig.bands[0], ...colorStops]; }
             map.setPaintProperty(pointLayerId, 'circle-color', colorExpression);
-            const outlierBounds = state.horizon === '0' ? paramConfig.surfaceOutlierBounds : paramConfig.bottomOutlierBounds;
+            const outlierBounds = paramConfig.seasonHorizonOutliers?.[key];
             const radiusExpression = outlierBounds ? ['case', ['any', ['<', ['get', paramConfig.prop], outlierBounds.lower], ['>', ['get', paramConfig.prop], outlierBounds.upper]], paramConfig.sizeConfig.base * 1.6, paramConfig.sizeConfig.base] : paramConfig.sizeConfig.base;
             map.setPaintProperty(pointLayerId, 'circle-radius', radiusExpression);
         }
@@ -580,7 +582,23 @@ async function initializeMap() {
         const validData = rawData.filter(p => p.longitude != null && p.latitude != null);
         validData.forEach(p => { p.datetime_full_formatted = formatFullDateTime(p.date, p.time); p.oxygen_mgl_formatted = formatNumber(p.oxygen_mgl, 1); p.temp_c_formatted = formatNumber(p.temp_c, 1); p.ph_formatted = formatNumber(p.ph, 2); p.salinity_psu_formatted = formatNumber(p.salinity_psu, 2); });
         fullData = validData.map(p => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] }, properties: p }));
-        Object.entries(config.scales).forEach(([param, paramConfig]) => { if (!paramConfig.breaks) { const surfaceData = fullData.filter(f => String(f.properties.horizon) === '0'); paramConfig.surfaceBreaks = generateDynamicBreaks(surfaceData, paramConfig.prop, paramConfig.bands.length); paramConfig.surfaceOutlierBounds = calculateOutlierBounds(surfaceData.map(f => f.properties[paramConfig.prop])); const bottomData = fullData.filter(f => String(f.properties.horizon) === 'дно'); paramConfig.bottomBreaks = generateDynamicBreaks(bottomData, paramConfig.prop, paramConfig.bands.length); paramConfig.bottomOutlierBounds = calculateOutlierBounds(bottomData.map(f => f.properties[paramConfig.prop])); } });
+        Object.entries(config.scales).forEach(([param, paramConfig]) => {
+            if (!paramConfig.breaks) {
+                paramConfig.seasonHorizonBreaks = {};
+                paramConfig.seasonHorizonOutliers = {};
+                ['spring', 'autumn'].forEach(season => {
+                    ['0', 'дно'].forEach(horizon => {
+                        const key = `${season}_${horizon}`;
+                        const filteredData = fullData.filter(f =>
+                            String(f.properties.horizon) === horizon &&
+                            getSeason(f.properties.date) === season
+                        );
+                        paramConfig.seasonHorizonBreaks[key] = generateDynamicBreaks(filteredData, paramConfig.prop, paramConfig.bands.length);
+                        paramConfig.seasonHorizonOutliers[key] = calculateOutlierBounds(filteredData.map(f => f.properties[paramConfig.prop]));
+                    });
+                });
+            }
+        });
         if (fullData.length > 0) { const bounds = calculateBounds(fullData); map.fitBounds(bounds, { padding: 50, duration: 0 }); const sw = bounds.getSouthWest(), ne = bounds.getNorthEast(); const lngDiff = ne.lng - sw.lng, latDiff = ne.lat - sw.lat, padding = 0.2; map.setMaxBounds(new mapboxgl.LngLatBounds([sw.lng - lngDiff * padding, sw.lat - latDiff * padding], [ne.lng + lngDiff * padding, ne.lat + latDiff * padding])); }
         map.addSource('points-source', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         Object.entries(config.scales).forEach(([param, scale]) => { map.addLayer({ id: `${param}-points-layer`, type: 'circle', source: 'points-source', layout: { visibility: 'none' }, paint: { 'circle-color': '#cccccc', 'circle-stroke-width': 1.5, 'circle-stroke-color': '#fff', 'circle-radius': scale.sizeConfig.base } }, config.firstLabelLayerId); map.addLayer({ id: `${param}-labels-layer`, type: 'symbol', source: 'points-source', layout: { visibility: 'none', 'text-field': ['get', `${scale.prop}_formatted`], 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'], 'text-size': 10.5, 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0, 0, 0, 0.85)', 'text-halo-width': 1.2 } }, config.firstLabelLayerId); });
