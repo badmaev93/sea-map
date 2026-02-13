@@ -13,8 +13,7 @@
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
         #menu-toggle { display: none; position: absolute; top: 16px; left: 16px; width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15); cursor: pointer; z-index: 2; font-size: 20px; align-items: center; justify-content: center; }
         #menu { position: absolute; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 16px; top: 16px; left: 16px; border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 220px; }
-        #menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.08); }
-        #menu-header h3 { margin: 0; font-size: 15px; font-weight: 600; color: #1a1a2e; }
+        #menu-header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px; }
         #menu-close { width: 28px; height: 28px; border-radius: 8px; background: transparent; border: none; cursor: pointer; font-size: 18px; color: #666; display: none; align-items: center; justify-content: center; }
         #menu-close:hover { background: rgba(0,0,0,0.06); }
         #menu h4 { margin: 16px 0 10px 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #888; }
@@ -43,7 +42,9 @@
         .toggle-slider::before { position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s ease; }
         .toggle-switch input:checked + .toggle-slider { background: #3887be; }
         .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
-        #legend { position: absolute; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 12px 16px; bottom: 80px; right: 16px; border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 320px; }
+        #legend { position: absolute; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 10px 12px; bottom: 80px; right: 16px; border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 160px; font-size: 11px; }
+        #legend h4 { font-size: 12px; margin-bottom: 8px; }
+        #legend div { margin-bottom: 5px; font-size: 11px; }
         .legend-key { display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: middle; border-radius: 4px; }
         #legend h4 { margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #1a1a2e; }
         #legend div { margin-bottom: 6px; font-size: 12px; color: #444; }
@@ -60,7 +61,7 @@
         #custom-attribution { position: absolute; bottom: 10px; right: 10px; z-index: 2; background-color: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 3px; font-size: 12px; }
         #custom-attribution a { color: #333; text-decoration: none; }
         #custom-attribution a:hover { text-decoration: underline; }
-        #charts-panel { position: absolute; top: 16px; right: 16px; width: 320px; max-height: calc(100vh - 260px); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-y: auto; }
+        #charts-panel { position: absolute; top: 16px; right: 16px; width: 256px; max-height: calc(100vh - 260px); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-y: auto; }
         #charts-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.95); border-radius: 12px 12px 0 0; position: sticky; top: 0; }
         #charts-header h4 { margin: 0; font-size: 13px; font-weight: 600; color: #1a1a2e; }
         #charts-close-btn { width: 22px; height: 22px; border-radius: 6px; background: transparent; border: none; cursor: pointer; font-size: 14px; color: #666; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -73,21 +74,21 @@
         .spinner { width: 48px; height: 48px; border: 4px solid #f0f2f5; border-top: 4px solid #3887be; border-radius: 50%; animation: spin 0.8s linear infinite; }
         #loader p { margin-top: 20px; font-size: 15px; color: #666; text-align: center; padding: 0 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #info-panel { position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); max-width: 800px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 8px; padding: 12px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.2); z-index: 1; font-size: 13px; }
-        #info-panel .info-header { font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
-        #info-panel .info-data { display: flex; gap: 20px; flex-wrap: wrap; color: #555; }
-        #info-panel .info-data > div { white-space: nowrap; }
-        #timeline-container { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.25)); backdrop-filter: blur(12px); border-radius: 0; padding: 8px 40px; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1; }
+        #timeline-container { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.25)); backdrop-filter: blur(12px); border-radius: 0; padding: 3px 40px; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1; }
+        #timeline-info { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #1a1a2e; margin-bottom: 3px; min-height: 20px; }
+        #info-inline { display: none; flex: 1; text-align: center; font-weight: 500; }
+        #info-inline .info-data { display: inline-flex; gap: 15px; }
+        #info-inline .info-data > div { white-space: nowrap; }
         #timeline-zones { position: absolute; left: 20px; right: 20px; top: 12px; height: 6px; border-radius: 3px; pointer-events: none; }
         #timeline-slider { width: 100%; height: 6px; border-radius: 3px; background: rgba(200, 200, 200, 0.3); outline: none; -webkit-appearance: none; cursor: pointer; position: relative; z-index: 1; }
         #timeline-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,255,255,0.8); transition: transform 0.1s; }
         #timeline-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
         #timeline-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); cursor: pointer; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
-        #timeline-label { text-align: center; font-size: 12px; font-weight: 700; color: #1a1a2e; text-shadow: 0 1px 3px rgba(255,255,255,0.9); letter-spacing: 0.3px; }
+        #timeline-label { font-size: 11px; font-weight: 600; color: #1a1a2e; }
         #timeline-play-btn:hover { transform: scale(1.05); }
         .timeline-tick { position: absolute; width: 2px; height: 14px; background: rgba(0,0,0,0.35); top: -4px; pointer-events: none; border-radius: 1px; }
         @media (max-width: 900px) { #charts-panel { display: none; } #legend { display: none; } }
-        @media (max-width: 600px) { #menu { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; border-radius: 0; transform: translateX(-100%); overflow-y: auto; transition: transform 0.2s ease; z-index: 10; } #menu.open { transform: translateX(0); } #menu-toggle { display: flex; } #menu-close { display: flex; } #info-panel { bottom: 70px; max-width: calc(100% - 20px); font-size: 11px; padding: 10px 15px; } #info-panel .info-data { gap: 12px; } }
+        @media (max-width: 600px) { #menu { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; border-radius: 0; transform: translateX(-100%); overflow-y: auto; transition: transform 0.2s ease; z-index: 10; } #menu.open { transform: translateX(0); } #menu-toggle { display: flex; } #menu-close { display: flex; } #timeline-container { padding: 3px 20px; } #timeline-info { font-size: 9px; } #info-inline .info-data { gap: 8px; } }
     </style>
 </head>
 <body>
@@ -97,7 +98,7 @@
 <div id="custom-logo"><img src="https://raw.githubusercontent.com/badmaev93/sea-map/refs/heads/main/150_logo75.png" alt="ДВНИГМИ"></div>
 <div id="custom-attribution"><a href="https://www.mapbox.com/about/maps/" target="_blank">© Mapbox</a> | <a href="http://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap</a></div>
 <div id="menu">
-    <div id="menu-header"><h3>Настройки</h3><button id="menu-close">✕</button></div>
+    <div id="menu-header"><button id="menu-close">✕</button></div>
     <h4>Параметр</h4>
     <div class="layer-group">
         <button id="btn-oxygen-points" class="active" data-param="oxygen">Кислород</button>
@@ -109,17 +110,17 @@
         <button class="horizon-btn" data-value="дно">Дно</button>
     </div>
     <div class="toggle-row"><span>Показывать подписи</span><label class="toggle-switch"><input type="checkbox" id="show-labels"><span class="toggle-slider"></span></label></div>
-    <button id="download-btn" style="width: 100%; margin-top: 16px; padding: 12px; border: none; background: linear-gradient(135deg, #3887be, #2d6a9f); color: white; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.15s ease;">📥 Скачать карту</button>
+    <button id="download-btn" style="width: 40px; height: 40px; margin-top: 16px; padding: 0; border: none; background: white; border-radius: 8px; cursor: pointer; font-size: 20px; transition: all 0.15s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">⬇</button>
 </div>
 <div id="legend"></div>
-<div id="info-panel" style="display: none;"></div>
 <div id="timeline-container">
+    <div id="timeline-info">
+        <div id="timeline-label"></div>
+        <div id="info-inline"></div>
+        <button id="timeline-play-btn" style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: transform 0.1s; flex-shrink: 0;">▶</button>
+    </div>
     <div id="timeline-zones"></div>
     <input type="range" id="timeline-slider" min="0" max="100" value="0">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
-        <div id="timeline-label" style="flex: 1; text-align: center;"></div>
-        <button id="timeline-play-btn" style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: transform 0.1s; flex-shrink: 0;">▶</button>
-    </div>
 </div>
 <div id="charts-panel" style="display: none;">
     <div id="charts-header">
@@ -598,7 +599,7 @@ function setupControls() {
     document.getElementById('charts-close-btn').addEventListener('click', () => {
         state.selectedStation = null;
         document.getElementById('charts-panel').style.display = 'none';
-        document.getElementById('info-panel').style.display = 'none';
+        document.getElementById('info-inline').style.display = 'none';
     });
     document.getElementById('timeline-play-btn').addEventListener('click', () => {
         const playBtn = document.getElementById('timeline-play-btn');
@@ -624,7 +625,7 @@ function setupControls() {
         if (!e.originalEvent.defaultPrevented) {
             state.selectedStation = null;
             document.getElementById('charts-panel').style.display = 'none';
-            document.getElementById('info-panel').style.display = 'none';
+            document.getElementById('info-inline').style.display = 'none';
         }
     });
 }
@@ -661,7 +662,7 @@ async function initializeMap() {
         Object.entries(config.scales).forEach(([param, scale]) => { map.addLayer({ id: `${param}-points-layer`, type: 'circle', source: 'points-source', layout: { visibility: 'none' }, paint: { 'circle-color': '#cccccc', 'circle-stroke-width': 1.5, 'circle-stroke-color': '#fff', 'circle-radius': scale.sizeConfig.base } }, config.firstLabelLayerId); map.addLayer({ id: `${param}-labels-layer`, type: 'symbol', source: 'points-source', layout: { visibility: 'none', 'text-field': ['get', `${scale.prop}_formatted`], 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'], 'text-size': 10.5, 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0, 0, 0, 0.85)', 'text-halo-width': 1.2 } }, config.firstLabelLayerId); });
         setupControls();
         buildTimeline();
-        Object.keys(config.scales).forEach(param => { map.on('click', `${param}-points-layer`, e => { e.originalEvent.preventDefault(); const props = e.features[0].properties; state.selectedStation = props.station_id; updateCharts(); const infoPanel = document.getElementById('info-panel'); infoPanel.innerHTML = `<div class="info-header">Станция ${props.station_id} · ${props.bay} · Горизонт: ${props.horizon} · ${props.datetime_full_formatted}</div><div class="info-data"><div>t: ${props.temp_c_formatted}°C</div><div>S: ${props.salinity_psu_formatted} PSU</div><div>O₂: ${props.oxygen_mgl_formatted} мг/л</div><div>pH: ${props.ph_formatted}</div></div>`; infoPanel.style.display = 'block'; }); map.on('mouseenter', `${param}-points-layer`, () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', `${param}-points-layer`, () => map.getCanvas().style.cursor = ''); });
+        Object.keys(config.scales).forEach(param => { map.on('click', `${param}-points-layer`, e => { e.originalEvent.preventDefault(); const props = e.features[0].properties; state.selectedStation = props.station_id; updateCharts(); const infoInline = document.getElementById('info-inline'); infoInline.innerHTML = `Станция ${props.station_id} · ${props.bay} · Гориз.: ${props.horizon} · <span class="info-data"><span>t: ${props.temp_c_formatted}°C</span><span>S: ${props.salinity_psu_formatted}</span><span>O₂: ${props.oxygen_mgl_formatted}</span><span>pH: ${props.ph_formatted}</span></span>`; infoInline.style.display = 'flex'; }); map.on('mouseenter', `${param}-points-layer`, () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', `${param}-points-layer`, () => map.getCanvas().style.cursor = ''); });
         updateLayers();
         loader.style.opacity = 0; setTimeout(() => loader.style.display = 'none', 300);
     } catch (error) { console.error("Не удалось загрузить данные:", error); if (loaderText) { loader.querySelector('.spinner').style.display = 'none'; loaderText.innerHTML = "Ошибка загрузки данных.<br>Обновите страницу."; } }
