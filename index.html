@@ -77,7 +77,7 @@
         #timeline-container { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; max-width: 700px; background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.25)); backdrop-filter: blur(12px); border-radius: 0; padding: 6px 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1; }
         #timeline-info { display: flex; align-items: center; justify-content: flex-start; font-size: 11px; color: #1a1a2e; margin-bottom: 4px; min-height: 24px; }
         #timeline-label { text-align: center; font-size: 11px; font-weight: 600; color: #1a1a2e; margin-top: 4px; }
-        #info-inline { display: none; flex: 1; text-align: center; font-weight: 500; justify-content: center; align-items: center; }
+        #info-inline { flex: 1; text-align: center; font-weight: 500; justify-content: center; align-items: center; }
         #info-inline .info-data { display: inline-flex; gap: 15px; justify-content: center; }
         #info-inline .info-data > span { white-space: nowrap; }
         #timeline-zones { position: absolute; left: 20px; right: 20px; top: 30px; height: 6px; border-radius: 3px; pointer-events: none; }
@@ -127,7 +127,7 @@
 <div id="legend"></div>
 <div id="timeline-container">
     <div id="timeline-info">
-        <div id="info-inline"></div>
+        <div id="info-inline" style="display: flex; color: #888; font-style: italic;">Выберите станцию на карте для просмотра параметров</div>
         <button id="timeline-play-btn" style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: transform 0.1s; flex-shrink: 0; margin-left: auto;">▶</button>
     </div>
     <div id="timeline-zones"></div>
@@ -611,7 +611,10 @@ function setupControls() {
     document.getElementById('charts-close-btn').addEventListener('click', () => {
         state.selectedStation = null;
         document.getElementById('charts-panel').style.display = 'none';
-        document.getElementById('info-inline').style.display = 'none';
+        const infoInline = document.getElementById('info-inline');
+        infoInline.innerHTML = 'Выберите станцию на карте для просмотра параметров';
+        infoInline.style.color = '#888';
+        infoInline.style.fontStyle = 'italic';
     });
     document.getElementById('timeline-play-btn').addEventListener('click', () => {
         const playBtn = document.getElementById('timeline-play-btn');
@@ -637,7 +640,10 @@ function setupControls() {
         if (!e.originalEvent.defaultPrevented) {
             state.selectedStation = null;
             document.getElementById('charts-panel').style.display = 'none';
-            document.getElementById('info-inline').style.display = 'none';
+            const infoInline = document.getElementById('info-inline');
+            infoInline.innerHTML = 'Выберите станцию на карте для просмотра параметров';
+            infoInline.style.color = '#888';
+            infoInline.style.fontStyle = 'italic';
         }
     });
 }
@@ -674,7 +680,7 @@ async function initializeMap() {
         Object.entries(config.scales).forEach(([param, scale]) => { map.addLayer({ id: `${param}-points-layer`, type: 'circle', source: 'points-source', layout: { visibility: 'none' }, paint: { 'circle-color': '#cccccc', 'circle-stroke-width': 1.5, 'circle-stroke-color': '#fff', 'circle-radius': scale.sizeConfig.base } }, config.firstLabelLayerId); map.addLayer({ id: `${param}-labels-layer`, type: 'symbol', source: 'points-source', layout: { visibility: 'none', 'text-field': ['get', `${scale.prop}_formatted`], 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'], 'text-size': 10.5, 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0, 0, 0, 0.85)', 'text-halo-width': 1.2 } }, config.firstLabelLayerId); });
         setupControls();
         buildTimeline();
-        Object.keys(config.scales).forEach(param => { map.on('click', `${param}-points-layer`, e => { e.originalEvent.preventDefault(); const props = e.features[0].properties; state.selectedStation = props.station_id; updateCharts(); const infoInline = document.getElementById('info-inline'); infoInline.innerHTML = `Станция ${props.station_id} · ${props.bay} · Гориз.: ${props.horizon} · <span class="info-data"><span>t: ${props.temp_c_formatted}°C</span><span>S: ${props.salinity_psu_formatted}</span><span>O₂: ${props.oxygen_mgl_formatted}</span><span>pH: ${props.ph_formatted}</span></span>`; infoInline.style.display = 'flex'; }); map.on('mouseenter', `${param}-points-layer`, () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', `${param}-points-layer`, () => map.getCanvas().style.cursor = ''); });
+        Object.keys(config.scales).forEach(param => { map.on('click', `${param}-points-layer`, e => { e.originalEvent.preventDefault(); const props = e.features[0].properties; state.selectedStation = props.station_id; updateCharts(); const infoInline = document.getElementById('info-inline'); infoInline.innerHTML = `Станция ${props.station_id} · ${props.bay} · Гориз.: ${props.horizon} · <span class="info-data"><span>t: ${props.temp_c_formatted}°C</span><span>S: ${props.salinity_psu_formatted}</span><span>O₂: ${props.oxygen_mgl_formatted}</span><span>pH: ${props.ph_formatted}</span></span>`; infoInline.style.color = '#1a1a2e'; infoInline.style.fontStyle = 'normal'; }); map.on('mouseenter', `${param}-points-layer`, () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', `${param}-points-layer`, () => map.getCanvas().style.cursor = ''); });
         updateLayers();
         loader.style.opacity = 0; setTimeout(() => loader.style.display = 'none', 300);
     } catch (error) { console.error("Не удалось загрузить данные:", error); if (loaderText) { loader.querySelector('.spinner').style.display = 'none'; loaderText.innerHTML = "Ошибка загрузки данных.<br>Обновите страницу."; } }
