@@ -43,7 +43,7 @@
         .toggle-slider::before { position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s ease; }
         .toggle-switch input:checked + .toggle-slider { background: #3887be; }
         .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
-        #legend { position: absolute; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 12px 16px; top: 420px; left: 16px; border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 220px; }
+        #legend { position: absolute; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 12px 16px; bottom: 80px; right: 16px; border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 320px; }
         .legend-key { display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: middle; border-radius: 4px; }
         #legend h4 { margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #1a1a2e; }
         #legend div { margin-bottom: 6px; font-size: 12px; color: #444; }
@@ -60,20 +60,24 @@
         #custom-attribution { position: absolute; bottom: 10px; right: 10px; z-index: 2; background-color: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 3px; font-size: 12px; }
         #custom-attribution a { color: #333; text-decoration: none; }
         #custom-attribution a:hover { text-decoration: underline; }
-        #charts-panel { position: absolute; top: 16px; right: 16px; width: 320px; max-height: calc(100vh - 80px); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-y: auto; }
-        #charts-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.95); border-radius: 12px 12px 0 0; position: sticky; top: 0; }
-        #charts-header h4 { margin: 0; font-size: 14px; font-weight: 600; color: #1a1a2e; }
-        #charts-close-btn { width: 24px; height: 24px; border-radius: 6px; background: transparent; border: none; cursor: pointer; font-size: 16px; color: #666; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        #charts-panel { position: absolute; top: 16px; right: 16px; width: 320px; max-height: calc(100vh - 260px); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-y: auto; }
+        #charts-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.95); border-radius: 12px 12px 0 0; position: sticky; top: 0; }
+        #charts-header h4 { margin: 0; font-size: 13px; font-weight: 600; color: #1a1a2e; }
+        #charts-close-btn { width: 22px; height: 22px; border-radius: 6px; background: transparent; border: none; cursor: pointer; font-size: 14px; color: #666; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         #charts-close-btn:hover { background: rgba(0,0,0,0.06); }
-        .chart-container { padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .chart-container { padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.06); }
         .chart-container:last-child { border-bottom: none; }
-        .chart-container h5 { margin: 0 0 10px 0; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-        .chart-wrapper { position: relative; height: 130px; }
+        .chart-container h5 { margin: 0 0 8px 0; font-size: 10px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .chart-wrapper { position: relative; height: 100px; }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.9); z-index: 10; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.3s ease; }
         .spinner { width: 48px; height: 48px; border: 4px solid #f0f2f5; border-top: 4px solid #3887be; border-radius: 50%; animation: spin 0.8s linear infinite; }
         #loader p { margin-top: 20px; font-size: 15px; color: #666; text-align: center; padding: 0 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #timeline-container { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.25)); backdrop-filter: blur(12px); border-radius: 0; padding: 12px 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1; }
+        #info-panel { position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); max-width: 800px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 8px; padding: 12px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.2); z-index: 1; font-size: 13px; }
+        #info-panel .info-header { font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
+        #info-panel .info-data { display: flex; gap: 20px; flex-wrap: wrap; color: #555; }
+        #info-panel .info-data > div { white-space: nowrap; }
+        #timeline-container { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.25)); backdrop-filter: blur(12px); border-radius: 0; padding: 8px 40px; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1; }
         #timeline-zones { position: absolute; left: 20px; right: 20px; top: 12px; height: 6px; border-radius: 3px; pointer-events: none; }
         #timeline-slider { width: 100%; height: 6px; border-radius: 3px; background: rgba(200, 200, 200, 0.3); outline: none; -webkit-appearance: none; cursor: pointer; position: relative; z-index: 1; }
         #timeline-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,255,255,0.8); transition: transform 0.1s; }
@@ -82,8 +86,8 @@
         #timeline-label { text-align: center; font-size: 12px; font-weight: 700; color: #1a1a2e; text-shadow: 0 1px 3px rgba(255,255,255,0.9); letter-spacing: 0.3px; }
         #timeline-play-btn:hover { transform: scale(1.05); }
         .timeline-tick { position: absolute; width: 2px; height: 14px; background: rgba(0,0,0,0.35); top: -4px; pointer-events: none; border-radius: 1px; }
-        @media (max-width: 900px) { #charts-panel { display: none; } }
-        @media (max-width: 600px) { #menu { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; border-radius: 0; transform: translateX(-100%); overflow-y: auto; transition: transform 0.2s ease; z-index: 10; } #menu.open { transform: translateX(0); } #menu-toggle { display: flex; } #menu-close { display: flex; } #legend { top: auto; bottom: 80px; left: 10px; right: 10px; width: auto; } }
+        @media (max-width: 900px) { #charts-panel { display: none; } #legend { display: none; } }
+        @media (max-width: 600px) { #menu { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; border-radius: 0; transform: translateX(-100%); overflow-y: auto; transition: transform 0.2s ease; z-index: 10; } #menu.open { transform: translateX(0); } #menu-toggle { display: flex; } #menu-close { display: flex; } #info-panel { bottom: 70px; max-width: calc(100% - 20px); font-size: 11px; padding: 10px 15px; } #info-panel .info-data { gap: 12px; } }
     </style>
 </head>
 <body>
@@ -108,6 +112,7 @@
     <button id="download-btn" style="width: 100%; margin-top: 16px; padding: 12px; border: none; background: linear-gradient(135deg, #3887be, #2d6a9f); color: white; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.15s ease;">📥 Скачать карту</button>
 </div>
 <div id="legend"></div>
+<div id="info-panel" style="display: none;"></div>
 <div id="timeline-container">
     <div id="timeline-zones"></div>
     <input type="range" id="timeline-slider" min="0" max="100" value="0">
@@ -259,21 +264,33 @@ function updateCharts() {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
 
+            const yearGroups = new Map();
             let startIdx = 0;
+
             seasonSeparators.forEach(sep => {
                 const endIdx = sep.index;
-                const centerIdx = (startIdx + endIdx) / 2;
-                const x = xScale.getPixelForValue(centerIdx);
-                ctx.fillText(sep.year, x, chartArea.bottom + 18);
+                if (!yearGroups.has(sep.year)) {
+                    yearGroups.set(sep.year, { start: startIdx, end: endIdx });
+                } else {
+                    yearGroups.get(sep.year).end = endIdx;
+                }
                 startIdx = endIdx;
             });
 
             if (dataPoints.length > 0) {
                 const lastYear = dataPoints[dataPoints.length - 1].year;
-                const centerIdx = (startIdx + dataPoints.length - 1) / 2;
-                const x = xScale.getPixelForValue(centerIdx);
-                ctx.fillText(lastYear, x, chartArea.bottom + 18);
+                if (!yearGroups.has(lastYear)) {
+                    yearGroups.set(lastYear, { start: startIdx, end: dataPoints.length - 1 });
+                } else {
+                    yearGroups.get(lastYear).end = dataPoints.length - 1;
+                }
             }
+
+            yearGroups.forEach((range, year) => {
+                const centerIdx = (range.start + range.end) / 2;
+                const x = xScale.getPixelForValue(centerIdx);
+                ctx.fillText(year, x, chartArea.bottom + 18);
+            });
 
             ctx.restore();
         }
@@ -581,6 +598,7 @@ function setupControls() {
     document.getElementById('charts-close-btn').addEventListener('click', () => {
         state.selectedStation = null;
         document.getElementById('charts-panel').style.display = 'none';
+        document.getElementById('info-panel').style.display = 'none';
     });
     document.getElementById('timeline-play-btn').addEventListener('click', () => {
         const playBtn = document.getElementById('timeline-play-btn');
@@ -606,6 +624,7 @@ function setupControls() {
         if (!e.originalEvent.defaultPrevented) {
             state.selectedStation = null;
             document.getElementById('charts-panel').style.display = 'none';
+            document.getElementById('info-panel').style.display = 'none';
         }
     });
 }
@@ -642,7 +661,7 @@ async function initializeMap() {
         Object.entries(config.scales).forEach(([param, scale]) => { map.addLayer({ id: `${param}-points-layer`, type: 'circle', source: 'points-source', layout: { visibility: 'none' }, paint: { 'circle-color': '#cccccc', 'circle-stroke-width': 1.5, 'circle-stroke-color': '#fff', 'circle-radius': scale.sizeConfig.base } }, config.firstLabelLayerId); map.addLayer({ id: `${param}-labels-layer`, type: 'symbol', source: 'points-source', layout: { visibility: 'none', 'text-field': ['get', `${scale.prop}_formatted`], 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'], 'text-size': 10.5, 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0, 0, 0, 0.85)', 'text-halo-width': 1.2 } }, config.firstLabelLayerId); });
         setupControls();
         buildTimeline();
-        Object.keys(config.scales).forEach(param => { map.on('click', `${param}-points-layer`, e => { e.originalEvent.preventDefault(); const props = e.features[0].properties; state.selectedStation = props.station_id; updateCharts(); new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(`<strong>Станция ${props.station_id}</strong><div class="popup-subheader">${props.bay}</div><div style="color:#888;font-size:12px;">Горизонт: ${props.horizon} · ${props.datetime_full_formatted}</div><table><tr><td>Температура</td><td>${props.temp_c_formatted}°C</td></tr><tr><td>Солёность</td><td>${props.salinity_psu_formatted} PSU</td></tr><tr><td>Кислород</td><td>${props.oxygen_mgl_formatted} мг/л</td></tr><tr><td>pH</td><td>${props.ph_formatted}</td></tr></table>`).addTo(map); }); map.on('mouseenter', `${param}-points-layer`, () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', `${param}-points-layer`, () => map.getCanvas().style.cursor = ''); });
+        Object.keys(config.scales).forEach(param => { map.on('click', `${param}-points-layer`, e => { e.originalEvent.preventDefault(); const props = e.features[0].properties; state.selectedStation = props.station_id; updateCharts(); const infoPanel = document.getElementById('info-panel'); infoPanel.innerHTML = `<div class="info-header">Станция ${props.station_id} · ${props.bay} · Горизонт: ${props.horizon} · ${props.datetime_full_formatted}</div><div class="info-data"><div>t: ${props.temp_c_formatted}°C</div><div>S: ${props.salinity_psu_formatted} PSU</div><div>O₂: ${props.oxygen_mgl_formatted} мг/л</div><div>pH: ${props.ph_formatted}</div></div>`; infoPanel.style.display = 'block'; }); map.on('mouseenter', `${param}-points-layer`, () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', `${param}-points-layer`, () => map.getCanvas().style.cursor = ''); });
         updateLayers();
         loader.style.opacity = 0; setTimeout(() => loader.style.display = 'none', 300);
     } catch (error) { console.error("Не удалось загрузить данные:", error); if (loaderText) { loader.querySelector('.spinner').style.display = 'none'; loaderText.innerHTML = "Ошибка загрузки данных.<br>Обновите страницу."; } }
