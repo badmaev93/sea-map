@@ -32,6 +32,9 @@
         .horizon-btn { flex: 1; padding: 10px; border: none; background: #f0f2f5; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: #444; transition: all 0.15s ease; text-align: center; }
         .horizon-btn:hover { background: #e4e6eb; }
         .horizon-btn.active { background: #1a1a2e; color: white; }
+        .season-btn { flex: 1; padding: 10px; border: none; background: #f0f2f5; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: #444; transition: all 0.15s ease; text-align: center; }
+        .season-btn:hover { background: #e4e6eb; }
+        .season-btn.active { background: #1a1a2e; color: white; }
         .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.08); }
         .toggle-row span { font-size: 13px; color: #444; }
         .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
@@ -81,6 +84,11 @@
     <div id="menu-header"><h3>Настройки</h3><button id="menu-close">✕</button></div>
     <h4>Год</h4>
     <div class="select-wrapper"><select id="year-select"></select></div>
+    <h4>Сезон</h4>
+    <div class="horizon-group">
+        <button class="season-btn active" data-value="spring">Весна</button>
+        <button class="season-btn" data-value="autumn">Осень</button>
+    </div>
     <h4>Параметр</h4>
     <div class="layer-group">
         <button id="btn-oxygen-points" class="active" data-param="oxygen">Кислород</button>
@@ -92,19 +100,20 @@
         <button class="horizon-btn" data-value="дно">Дно</button>
     </div>
     <div class="toggle-row"><span>Показывать подписи</span><label class="toggle-switch"><input type="checkbox" id="show-labels"><span class="toggle-slider"></span></label></div>
+    <button id="download-btn" style="width: 100%; margin-top: 16px; padding: 12px; border: none; background: linear-gradient(135deg, #3887be, #2d6a9f); color: white; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.15s ease;">📥 Скачать карту</button>
 </div>
 <div id="legend"></div>
-<div id="charts-panel">
-    <h4>Временные ряды</h4>
+<div id="charts-panel" style="display: none;">
+    <h4 id="charts-title">Временные ряды</h4>
     <div class="chart-container"><h5>Температура, °C</h5><div class="chart-wrapper"><canvas id="temp-chart"></canvas></div></div>
     <div class="chart-container"><h5>Солёность, PSU</h5><div class="chart-wrapper"><canvas id="salinity-chart"></canvas></div></div>
 </div>
 <script>
 mapboxgl.accessToken = 'pk.eyJ1IjoiYm9sZWc5MzQiLCJhIjoiY2syY3pjeXFyMjN5aTNobzZmZGl5cng3aiJ9.ADhGQN0rFnGwPCk53capfQ';
-const map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/light-v10', center: [132.026960, 43.130572], zoom: 8.95, attributionControl: false });
+const map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/light-v10', center: [132.026960, 43.130572], zoom: 8.95, attributionControl: false, preserveDrawingBuffer: true });
 const config = { scales: { oxygen: { title: 'Кислород, мг/л', prop: 'oxygen_mgl', format: 1, breaks: [6, 8, 10], bands: ['#f46d43', '#d9ef8b', '#a6d96a', '#66bd63'], sizeConfig: { base: 16 } }, ph: { title: 'pH', prop: 'ph', format: 2, bands: ['#eff3ff', '#bdd7e7', '#6baed6'], sizeConfig: { base: 18 } } }, firstLabelLayerId: 'waterway-label' };
 let tempChart = null, salinityChart = null, fullData = [];
-let state = { activeParam: 'oxygen', showLabels: false, horizon: '0', year: null };
+let state = { activeParam: 'oxygen', showLabels: false, horizon: '0', year: null, season: 'spring', selectedStation: null };
 
 function formatNumber(value, decimalPlaces) { if (typeof value !== 'number' || !isFinite(value)) return 'н/д'; return value.toFixed(decimalPlaces).replace('.', ','); }
 function formatFullDateTime(dateStr, timeStr) { if (!dateStr || !timeStr) return 'Нет данных'; const dateParts = String(dateStr).split('/'); const timeParts = String(timeStr).split(':'); if (dateParts.length !== 3 || timeParts.length < 2) return 'Неверный формат'; const [month, day, year] = dateParts; const [hour, minute] = timeParts; return `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.${year} ${hour}:${minute}`; }
@@ -119,7 +128,7 @@ function updateLegend() {
     const breaks = paramConfig.breaks || (state.horizon === '0' ? paramConfig.surfaceBreaks : paramConfig.bottomBreaks);
     if (state.activeParam === 'oxygen' && paramConfig.breaks) {
         const bands = paramConfig.bands;
-        content += `<div><span class="legend-key" style="background:${bands[0]}"></span>&lt; ${formatNumber(breaks[0], 1)} (гипоксия)</div>`;
+        content += `<div><span class="legend-key" style="background:${bands[0]}"></span>&lt; ${formatNumber(breaks[0], 1)}</div>`;
         content += `<div><span class="legend-key" style="background:${bands[1]}"></span>${formatNumber(breaks[0], 1)} – ${formatNumber(breaks[1], 1)}</div>`;
         content += `<div><span class="legend-key" style="background:${bands[2]}"></span>${formatNumber(breaks[1], 1)} – ${formatNumber(breaks[2], 1)}</div>`;
         content += `<div><span class="legend-key" style="background:${bands[3]}"></span>≥ ${formatNumber(breaks[2], 1)}</div>`;
@@ -131,12 +140,21 @@ function updateLegend() {
 }
 
 function parseDateTime(dateStr, timeStr) { if (!dateStr || !timeStr) return null; const dateParts = String(dateStr).split('/'); const timeParts = String(timeStr).split(':'); if (dateParts.length !== 3 || timeParts.length < 2) return null; const [month, day, year] = dateParts; const [hour, minute] = timeParts; return new Date(year, month - 1, day, hour, minute); }
+function getSeason(dateStr) { if (!dateStr) return null; const dateParts = String(dateStr).split('/'); if (dateParts.length !== 3) return null; const month = parseInt(dateParts[0]); if (month >= 3 && month <= 5) return 'spring'; if (month >= 9 && month <= 11) return 'autumn'; return null; }
 
 function updateCharts() {
-    const yearFilteredFeatures = fullData.filter(f => String(f.properties.date).split('/')[2] === state.year);
-    const filteredFeatures = yearFilteredFeatures.filter(f => String(f.properties.horizon) === state.horizon);
-    const dataPoints = filteredFeatures.map(f => ({ datetime: parseDateTime(f.properties.date, f.properties.time), temp: f.properties.temp_c, salinity: f.properties.salinity_psu, station: f.properties.station_id })).filter(d => d.datetime !== null).sort((a, b) => a.datetime - b.datetime);
-    const labels = dataPoints.map(d => { const day = String(d.datetime.getDate()).padStart(2, '0'); const month = String(d.datetime.getMonth() + 1).padStart(2, '0'); const hour = String(d.datetime.getHours()).padStart(2, '0'); const min = String(d.datetime.getMinutes()).padStart(2, '0'); return `${day}.${month} ${hour}:${min}`; });
+    if (!state.selectedStation) {
+        document.getElementById('charts-panel').style.display = 'none';
+        return;
+    }
+    document.getElementById('charts-panel').style.display = 'block';
+    document.getElementById('charts-title').textContent = `Временные ряды – Станция ${state.selectedStation}`;
+
+    let stationFeatures = fullData.filter(f => f.properties.station_id === state.selectedStation);
+    stationFeatures = stationFeatures.filter(f => getSeason(f.properties.date) === state.season);
+    const filteredFeatures = stationFeatures.filter(f => String(f.properties.horizon) === state.horizon);
+    const dataPoints = filteredFeatures.map(f => ({ datetime: parseDateTime(f.properties.date, f.properties.time), temp: f.properties.temp_c, salinity: f.properties.salinity_psu, station: f.properties.station_id, year: String(f.properties.date).split('/')[2] })).filter(d => d.datetime !== null).sort((a, b) => a.datetime - b.datetime);
+    const labels = dataPoints.map(d => { const day = String(d.datetime.getDate()).padStart(2, '0'); const month = String(d.datetime.getMonth() + 1).padStart(2, '0'); const hour = String(d.datetime.getHours()).padStart(2, '0'); const min = String(d.datetime.getMinutes()).padStart(2, '0'); return `${day}.${month}.${d.year} ${hour}:${min}`; });
     const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { title: (items) => `Ст. ${dataPoints[items[0].dataIndex].station}\n${labels[items[0].dataIndex]}` } } }, scales: { x: { ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } }, grid: { display: false } }, y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { font: { size: 10 } } } }, elements: { point: { radius: 3, hoverRadius: 5 }, line: { tension: 0.3, borderWidth: 2 } } };
     if (tempChart) tempChart.destroy(); if (salinityChart) salinityChart.destroy();
     tempChart = new Chart(document.getElementById('temp-chart').getContext('2d'), { type: 'line', data: { labels, datasets: [{ data: dataPoints.map(d => d.temp), borderColor: '#f46d43', backgroundColor: 'rgba(244,109,67,0.1)', fill: true }] }, options: chartOptions });
@@ -144,7 +162,8 @@ function updateCharts() {
 }
 
 function updateLayers() {
-    const yearFilteredFeatures = fullData.filter(f => String(f.properties.date).split('/')[2] === state.year);
+    let yearFilteredFeatures = fullData.filter(f => String(f.properties.date).split('/')[2] === state.year);
+    yearFilteredFeatures = yearFilteredFeatures.filter(f => getSeason(f.properties.date) === state.season);
     const filteredFeatures = yearFilteredFeatures.filter(f => String(f.properties.horizon) === state.horizon);
     const source = map.getSource('points-source');
     if (source) source.setData({ type: 'FeatureCollection', features: filteredFeatures });
@@ -167,6 +186,116 @@ function updateLayers() {
     updateLegend(); updateCharts();
 }
 
+function downloadMapAsImage() {
+    const mapCanvas = map.getCanvas();
+    const padding = 40;
+    const headerHeight = 80;
+    const legendWidth = 250;
+    const legendPadding = 20;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = mapCanvas.width + padding * 2;
+    canvas.height = mapCanvas.height + padding * 2 + headerHeight;
+    const ctx = canvas.getContext('2d');
+
+    // Белый фон
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Заголовок
+    const paramConfig = config.scales[state.activeParam];
+    const seasonText = state.season === 'spring' ? 'Весна' : 'Осень';
+    const horizonText = state.horizon === '0' ? 'Поверхность' : 'Дно';
+
+    ctx.fillStyle = '#1a1a2e';
+    ctx.font = 'bold 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`${paramConfig.title} – ${state.year} г., ${seasonText}`, padding, padding + 30);
+
+    ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = '#666';
+    ctx.fillText(`Горизонт: ${horizonText}`, padding, padding + 55);
+
+    // Карта
+    ctx.drawImage(mapCanvas, padding, padding + headerHeight);
+
+    // Легенда
+    const legendX = canvas.width - legendWidth - padding;
+    const legendY = padding + headerHeight + 20;
+
+    // Фон легенды
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 4;
+    ctx.fillRect(legendX, legendY, legendWidth, 180);
+    ctx.shadowColor = 'transparent';
+
+    // Рамка легенды
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(legendX, legendY, legendWidth, 180);
+
+    // Заголовок легенды
+    ctx.fillStyle = '#1a1a2e';
+    ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(paramConfig.title, legendX + legendPadding, legendY + legendPadding + 15);
+
+    // Элементы легенды
+    const breaks = paramConfig.breaks || (state.horizon === '0' ? paramConfig.surfaceBreaks : paramConfig.bottomBreaks);
+    let yOffset = legendY + legendPadding + 40;
+    const keySize = 14;
+    const itemSpacing = 30;
+
+    ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = '#444';
+
+    if (state.activeParam === 'oxygen' && paramConfig.breaks) {
+        const bands = paramConfig.bands;
+        const labels = [
+            `< ${formatNumber(breaks[0], 1)}`,
+            `${formatNumber(breaks[0], 1)} – ${formatNumber(breaks[1], 1)}`,
+            `${formatNumber(breaks[1], 1)} – ${formatNumber(breaks[2], 1)}`,
+            `≥ ${formatNumber(breaks[2], 1)}`
+        ];
+
+        labels.forEach((label, i) => {
+            // Цветной квадрат
+            ctx.fillStyle = bands[i];
+            ctx.fillRect(legendX + legendPadding, yOffset - keySize + 2, keySize, keySize);
+
+            // Текст
+            ctx.fillStyle = '#444';
+            ctx.fillText(label, legendX + legendPadding + keySize + 10, yOffset);
+            yOffset += itemSpacing;
+        });
+    } else {
+        if (breaks && breaks.length >= 2) {
+            for (let i = 0; i < paramConfig.bands.length && breaks[i + 1]; i++) {
+                // Цветной квадрат
+                ctx.fillStyle = paramConfig.bands[i];
+                ctx.fillRect(legendX + legendPadding, yOffset - keySize + 2, keySize, keySize);
+
+                // Текст
+                ctx.fillStyle = '#444';
+                const label = `${formatNumber(breaks[i], paramConfig.format)} – ${formatNumber(breaks[i + 1], paramConfig.format)}`;
+                ctx.fillText(label, legendX + legendPadding + keySize + 10, yOffset);
+                yOffset += itemSpacing;
+            }
+        }
+    }
+
+    // Скачивание
+    canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `карта_${state.activeParam}_${state.year}_${seasonText}_${horizonText}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
+
 function setupControls(years) {
     const yearSelect = document.getElementById('year-select');
     yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
@@ -174,7 +303,9 @@ function setupControls(years) {
     yearSelect.addEventListener('change', e => { state.year = e.target.value; updateLayers(); });
     document.querySelectorAll('.layer-group button').forEach(btn => { btn.addEventListener('click', e => { document.querySelectorAll('.layer-group button').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); state.activeParam = e.target.dataset.param; updateLayers(); }); });
     document.querySelectorAll('.horizon-btn').forEach(btn => { btn.addEventListener('click', e => { document.querySelectorAll('.horizon-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); state.horizon = e.target.dataset.value; updateLayers(); }); });
+    document.querySelectorAll('.season-btn').forEach(btn => { btn.addEventListener('click', e => { document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); state.season = e.target.dataset.value; updateLayers(); }); });
     document.getElementById('show-labels').addEventListener('change', e => { state.showLabels = e.target.checked; updateLayers(); });
+    document.getElementById('download-btn').addEventListener('click', downloadMapAsImage);
     document.getElementById('menu-toggle').addEventListener('click', () => document.getElementById('menu').classList.add('open'));
     document.getElementById('menu-close').addEventListener('click', () => document.getElementById('menu').classList.remove('open'));
 }
@@ -195,7 +326,7 @@ async function initializeMap() {
         map.addSource('points-source', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         Object.entries(config.scales).forEach(([param, scale]) => { map.addLayer({ id: `${param}-points-layer`, type: 'circle', source: 'points-source', layout: { visibility: 'none' }, paint: { 'circle-color': '#cccccc', 'circle-stroke-width': 1.5, 'circle-stroke-color': '#fff', 'circle-radius': scale.sizeConfig.base } }, config.firstLabelLayerId); map.addLayer({ id: `${param}-labels-layer`, type: 'symbol', source: 'points-source', layout: { visibility: 'none', 'text-field': ['get', `${scale.prop}_formatted`], 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'], 'text-size': 10.5, 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0, 0, 0, 0.85)', 'text-halo-width': 1.2 } }, config.firstLabelLayerId); });
         setupControls(years);
-        Object.keys(config.scales).forEach(param => { map.on('click', `${param}-points-layer`, e => { const props = e.features[0].properties; new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(`<strong>Станция ${props.station_id}</strong><div class="popup-subheader">${props.bay}</div><div style="color:#888;font-size:12px;">Горизонт: ${props.horizon} · ${props.datetime_full_formatted}</div><table><tr><td>Температура</td><td>${props.temp_c_formatted}°C</td></tr><tr><td>Солёность</td><td>${props.salinity_psu_formatted} PSU</td></tr><tr><td>Кислород</td><td>${props.oxygen_mgl_formatted} мг/л</td></tr><tr><td>pH</td><td>${props.ph_formatted}</td></tr></table>`).addTo(map); }); map.on('mouseenter', `${param}-points-layer`, () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', `${param}-points-layer`, () => map.getCanvas().style.cursor = ''); });
+        Object.keys(config.scales).forEach(param => { map.on('click', `${param}-points-layer`, e => { const props = e.features[0].properties; state.selectedStation = props.station_id; updateCharts(); new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(`<strong>Станция ${props.station_id}</strong><div class="popup-subheader">${props.bay}</div><div style="color:#888;font-size:12px;">Горизонт: ${props.horizon} · ${props.datetime_full_formatted}</div><table><tr><td>Температура</td><td>${props.temp_c_formatted}°C</td></tr><tr><td>Солёность</td><td>${props.salinity_psu_formatted} PSU</td></tr><tr><td>Кислород</td><td>${props.oxygen_mgl_formatted} мг/л</td></tr><tr><td>pH</td><td>${props.ph_formatted}</td></tr></table>`).addTo(map); }); map.on('mouseenter', `${param}-points-layer`, () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', `${param}-points-layer`, () => map.getCanvas().style.cursor = ''); });
         updateLayers();
         loader.style.opacity = 0; setTimeout(() => loader.style.display = 'none', 300);
     } catch (error) { console.error("Не удалось загрузить данные:", error); if (loaderText) { loader.querySelector('.spinner').style.display = 'none'; loaderText.innerHTML = "Ошибка загрузки данных.<br>Обновите страницу."; } }
