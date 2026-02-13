@@ -74,19 +74,20 @@
         .spinner { width: 48px; height: 48px; border: 4px solid #f0f2f5; border-top: 4px solid #3887be; border-radius: 50%; animation: spin 0.8s linear infinite; }
         #loader p { margin-top: 20px; font-size: 15px; color: #666; text-align: center; padding: 0 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #timeline-container { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50%; max-width: 600px; background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.25)); backdrop-filter: blur(12px); border-radius: 0; padding: 3px 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1; }
-        #timeline-info { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #1a1a2e; margin-bottom: 3px; min-height: 20px; }
+        #timeline-container { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50%; max-width: 600px; background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.25)); backdrop-filter: blur(12px); border-radius: 0; padding: 6px 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 1; }
+        #timeline-info { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #1a1a2e; margin-bottom: 4px; min-height: 24px; }
+        #timeline-label { position: absolute; left: 50%; transform: translateX(-50%); font-weight: 600; }
         #info-inline { display: none; flex: 1; text-align: center; font-weight: 500; justify-content: center; align-items: center; }
         #info-inline .info-data { display: inline-flex; gap: 15px; justify-content: center; }
         #info-inline .info-data > span { white-space: nowrap; }
-        #timeline-zones { position: absolute; left: 20px; right: 20px; top: 12px; height: 6px; border-radius: 3px; pointer-events: none; }
+        #timeline-zones { position: absolute; left: 20px; right: 20px; top: 30px; height: 6px; border-radius: 3px; pointer-events: none; }
         #timeline-slider { width: 100%; height: 6px; border-radius: 3px; background: rgba(200, 200, 200, 0.3); outline: none; -webkit-appearance: none; cursor: pointer; position: relative; z-index: 1; }
         #timeline-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,255,255,0.8); transition: transform 0.1s; }
         #timeline-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
         #timeline-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); cursor: pointer; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
         #timeline-label { font-size: 11px; font-weight: 600; color: #1a1a2e; }
         #timeline-play-btn:hover { transform: scale(1.05); }
-        .timeline-tick { position: absolute; width: 2px; height: 14px; background: rgba(0,0,0,0.35); top: -4px; pointer-events: none; border-radius: 1px; }
+        .timeline-tick { position: absolute; width: 2px; height: 10px; background: rgba(0,0,0,0.35); top: -2px; pointer-events: none; border-radius: 1px; }
         @media (max-width: 900px) { #charts-panel { display: none; } #legend { display: none; } #timeline-container { width: 70%; } }
         @media (max-width: 600px) { #menu { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; border-radius: 0; transform: translateX(-100%); overflow-y: auto; transition: transform 0.2s ease; z-index: 10; } #menu.open { transform: translateX(0); } #menu-toggle { display: flex; } #menu-close { display: flex; } #timeline-container { width: 90%; padding: 3px 15px; } #timeline-info { font-size: 9px; } #info-inline .info-data { gap: 8px; } }
     </style>
