@@ -60,12 +60,15 @@
         #custom-attribution { position: absolute; bottom: 10px; right: 10px; z-index: 2; background-color: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 3px; font-size: 12px; }
         #custom-attribution a { color: #333; text-decoration: none; }
         #custom-attribution a:hover { text-decoration: underline; }
-        #charts-panel { position: absolute; top: 16px; right: 16px; width: 380px; max-height: calc(100vh - 80px); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-y: auto; }
-        #charts-panel h4 { margin: 0; padding: 14px 16px; font-size: 15px; font-weight: 600; color: #1a1a2e; border-bottom: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.95); border-radius: 12px 12px 0 0; position: sticky; top: 0; }
-        .chart-container { padding: 16px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+        #charts-panel { position: absolute; top: 16px; right: 16px; width: 320px; max-height: calc(100vh - 80px); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-y: auto; }
+        #charts-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.95); border-radius: 12px 12px 0 0; position: sticky; top: 0; }
+        #charts-header h4 { margin: 0; font-size: 14px; font-weight: 600; color: #1a1a2e; }
+        #charts-close-btn { width: 24px; height: 24px; border-radius: 6px; background: transparent; border: none; cursor: pointer; font-size: 16px; color: #666; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        #charts-close-btn:hover { background: rgba(0,0,0,0.06); }
+        .chart-container { padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.06); }
         .chart-container:last-child { border-bottom: none; }
-        .chart-container h5 { margin: 0 0 12px 0; font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-        .chart-wrapper { position: relative; height: 160px; }
+        .chart-container h5 { margin: 0 0 10px 0; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .chart-wrapper { position: relative; height: 130px; }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.9); z-index: 10; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.3s ease; }
         .spinner { width: 48px; height: 48px; border: 4px solid #f0f2f5; border-top: 4px solid #3887be; border-radius: 50%; animation: spin 0.8s linear infinite; }
         #loader p { margin-top: 20px; font-size: 15px; color: #666; text-align: center; padding: 0 20px; }
@@ -76,7 +79,8 @@
         #timeline-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,255,255,0.8); transition: transform 0.1s; }
         #timeline-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
         #timeline-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); cursor: pointer; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 3px 8px rgba(0,0,0,0.3); }
-        #timeline-label { text-align: center; font-size: 12px; font-weight: 700; color: #1a1a2e; margin-top: 8px; text-shadow: 0 1px 3px rgba(255,255,255,0.9); letter-spacing: 0.3px; }
+        #timeline-label { text-align: center; font-size: 12px; font-weight: 700; color: #1a1a2e; text-shadow: 0 1px 3px rgba(255,255,255,0.9); letter-spacing: 0.3px; }
+        #timeline-play-btn:hover { transform: scale(1.05); }
         .timeline-tick { position: absolute; width: 2px; height: 14px; background: rgba(0,0,0,0.35); top: -4px; pointer-events: none; border-radius: 1px; }
         @media (max-width: 900px) { #charts-panel { display: none; } #timeline-container { width: 80%; } }
         @media (max-width: 600px) { #menu { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; border-radius: 0; transform: translateX(-100%); overflow-y: auto; transition: transform 0.2s ease; } #menu.open { transform: translateX(0); } #menu-toggle { display: flex; } #menu-close { display: flex; } #legend { bottom: 100px; right: 10px; left: 10px; } }
@@ -107,13 +111,19 @@
 <div id="timeline-container">
     <div id="timeline-zones"></div>
     <input type="range" id="timeline-slider" min="0" max="100" value="0">
-    <div id="timeline-label"></div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px;">
+        <button id="timeline-play-btn" style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: transform 0.1s;">▶</button>
+        <div id="timeline-label"></div>
+    </div>
 </div>
 <div id="charts-panel" style="display: none;">
-    <h4 id="charts-title">Временные ряды</h4>
-    <div class="chart-container"><h5 id="param-chart-title">Кислород <span style="font-size:9px;opacity:0.6;">мг/л</span></h5><div class="chart-wrapper"><canvas id="param-chart"></canvas></div></div>
-    <div class="chart-container"><h5>Температура <span style="font-size:9px;opacity:0.6;">°C</span></h5><div class="chart-wrapper"><canvas id="temp-chart"></canvas></div></div>
-    <div class="chart-container"><h5>Солёность <span style="font-size:9px;opacity:0.6;">PSU</span></h5><div class="chart-wrapper"><canvas id="salinity-chart"></canvas></div></div>
+    <div id="charts-header">
+        <h4 id="charts-title">Временные ряды</h4>
+        <button id="charts-close-btn">✕</button>
+    </div>
+    <div class="chart-container"><h5 id="param-chart-title">Кислород <span style="font-size:8px;opacity:0.6;">мг/л</span></h5><div class="chart-wrapper"><canvas id="param-chart"></canvas></div></div>
+    <div class="chart-container"><h5>Температура <span style="font-size:8px;opacity:0.6;">°C</span></h5><div class="chart-wrapper"><canvas id="temp-chart"></canvas></div></div>
+    <div class="chart-container"><h5>Солёность <span style="font-size:8px;opacity:0.6;">PSU</span></h5><div class="chart-wrapper"><canvas id="salinity-chart"></canvas></div></div>
 </div>
 <script>
 // Публичный токен Mapbox (безопасен для браузерного использования)
@@ -124,6 +134,7 @@ let paramChart = null, tempChart = null, salinityChart = null, fullData = [];
 let state = { activeParam: 'oxygen', showLabels: false, horizon: '0', year: null, season: 'spring', selectedStation: null };
 let timelineDates = [];
 let timelineIndex = 0;
+let timelineInterval = null;
 
 function formatNumber(value, decimalPlaces) { if (typeof value !== 'number' || !isFinite(value)) return 'н/д'; return value.toFixed(decimalPlaces).replace('.', ','); }
 function formatFullDateTime(dateStr, timeStr) { if (!dateStr || !timeStr) return 'Нет данных'; const dateParts = String(dateStr).split('/'); const timeParts = String(timeStr).split(':'); if (dateParts.length !== 3 || timeParts.length < 2) return 'Неверный формат'; const [month, day, year] = dateParts; const [hour, minute] = timeParts; return `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.${year} ${hour}:${minute}`; }
@@ -266,18 +277,15 @@ function updateCharts() {
                 const endIdx = sep.index;
                 const centerIdx = (startIdx + endIdx) / 2;
                 const x = xScale.getPixelForValue(centerIdx);
-                const seasonText = sep.season === 'spring' ? `Весна ${sep.year}` : `Осень ${sep.year}`;
-                ctx.fillText(seasonText, x, chartArea.bottom + 25);
+                ctx.fillText(sep.year, x, chartArea.bottom + 25);
                 startIdx = endIdx;
             });
 
             if (dataPoints.length > 0) {
-                const lastSeason = dataPoints[dataPoints.length - 1].season;
                 const lastYear = dataPoints[dataPoints.length - 1].year;
                 const centerIdx = (startIdx + dataPoints.length - 1) / 2;
                 const x = xScale.getPixelForValue(centerIdx);
-                const seasonText = lastSeason === 'spring' ? `Весна ${lastYear}` : `Осень ${lastYear}`;
-                ctx.fillText(seasonText, x, chartArea.bottom + 25);
+                ctx.fillText(lastYear, x, chartArea.bottom + 25);
             }
 
             ctx.restore();
@@ -303,7 +311,7 @@ function updateCharts() {
         },
         scales: {
             x: {
-                ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } },
+                ticks: { maxRotation: 0, minRotation: 0, font: { size: 9 } },
                 grid: { display: false }
             },
             y: {
@@ -583,6 +591,30 @@ function setupControls() {
     document.getElementById('timeline-slider').addEventListener('input', e => { onTimelineChange(parseInt(e.target.value)); });
     document.getElementById('menu-toggle').addEventListener('click', () => document.getElementById('menu').classList.add('open'));
     document.getElementById('menu-close').addEventListener('click', () => document.getElementById('menu').classList.remove('open'));
+    document.getElementById('charts-close-btn').addEventListener('click', () => {
+        state.selectedStation = null;
+        document.getElementById('charts-panel').style.display = 'none';
+    });
+    document.getElementById('timeline-play-btn').addEventListener('click', () => {
+        const playBtn = document.getElementById('timeline-play-btn');
+        if (timelineInterval) {
+            clearInterval(timelineInterval);
+            timelineInterval = null;
+            playBtn.textContent = '▶';
+        } else {
+            playBtn.textContent = '⏸';
+            timelineInterval = setInterval(() => {
+                if (timelineIndex < timelineDates.length - 1) {
+                    onTimelineChange(timelineIndex + 1);
+                    document.getElementById('timeline-slider').value = timelineIndex;
+                } else {
+                    clearInterval(timelineInterval);
+                    timelineInterval = null;
+                    playBtn.textContent = '▶';
+                }
+            }, 1000);
+        }
+    });
     map.on('click', e => {
         if (!e.originalEvent.defaultPrevented) {
             state.selectedStation = null;
