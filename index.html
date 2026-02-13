@@ -32,6 +32,9 @@
         .horizon-btn { flex: 1; padding: 10px; border: none; background: #f0f2f5; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: #444; transition: all 0.15s ease; text-align: center; }
         .horizon-btn:hover { background: #e4e6eb; }
         .horizon-btn.active { background: #1a1a2e; color: white; }
+        .season-btn { flex: 1; padding: 10px; border: none; background: #f0f2f5; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: #444; transition: all 0.15s ease; text-align: center; }
+        .season-btn:hover { background: #e4e6eb; }
+        .season-btn.active { background: #1a1a2e; color: white; }
         .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.08); }
         .toggle-row span { font-size: 13px; color: #444; }
         .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
@@ -44,7 +47,7 @@
         .legend-key { display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: middle; border-radius: 4px; }
         #legend h4 { margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #1a1a2e; }
         #legend div { margin-bottom: 6px; font-size: 12px; color: #444; }
-        .mapboxgl-popup-content { font-size: 14px; padding: 0; max-width: 700px; min-width: 600px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .mapboxgl-popup-content { font-size: 14px; padding: 14px 16px; max-width: 280px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         .mapboxgl-popup-content strong { color: #3887be; display: block; margin-bottom: 4px; font-size: 15px; }
         .mapboxgl-popup-content .popup-subheader { color: #666; font-size: 13px; margin-bottom: 8px; }
         .mapboxgl-popup-content table { width: 100%; margin-top: 10px; border-collapse: collapse; }
@@ -57,28 +60,17 @@
         #custom-attribution { position: absolute; bottom: 10px; right: 10px; z-index: 2; background-color: rgba(255,255,255,0.7); padding: 2px 5px; border-radius: 3px; font-size: 12px; }
         #custom-attribution a { color: #333; text-decoration: none; }
         #custom-attribution a:hover { text-decoration: underline; }
+        #charts-panel { position: absolute; top: 16px; right: 16px; width: 380px; max-height: calc(100vh - 80px); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; z-index: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-y: auto; }
+        #charts-panel h4 { margin: 0; padding: 14px 16px; font-size: 15px; font-weight: 600; color: #1a1a2e; border-bottom: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.95); border-radius: 12px 12px 0 0; position: sticky; top: 0; }
+        .chart-container { padding: 16px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .chart-container:last-child { border-bottom: none; }
+        .chart-container h5 { margin: 0 0 12px 0; font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .chart-wrapper { position: relative; height: 160px; }
         #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.9); z-index: 10; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.3s ease; }
         .spinner { width: 48px; height: 48px; border: 4px solid #f0f2f5; border-top: 4px solid #3887be; border-radius: 50%; animation: spin 0.8s linear infinite; }
         #loader p { margin-top: 20px; font-size: 15px; color: #666; text-align: center; padding: 0 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .popup-chart-container { padding: 16px; }
-        .popup-chart-container h5 { margin: 0 0 12px 0; font-size: 13px; font-weight: 600; color: #1a1a2e; text-align: center; }
-        .popup-chart-wrapper { position: relative; height: 200px; margin-bottom: 16px; }
-        .popup-chart-wrapper:last-child { margin-bottom: 0; }
-        .popup-divider { height: 1px; background: rgba(0,0,0,0.08); margin: 0 16px; }
-        #timeline-container { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); width: calc(100% - 240px); max-width: 1200px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 1; }
-        #timeline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        #timeline-current-date { font-size: 14px; font-weight: 600; color: #1a1a2e; }
-        #timeline-play-btn { width: 32px; height: 32px; border-radius: 8px; border: none; background: #3887be; color: white; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; }
-        #timeline-play-btn:hover { background: #2d6a9f; }
-        #timeline-slider-wrapper { position: relative; padding: 10px 0; }
-        #timeline-slider { width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(to right, #e0e0e0 0%, #3887be 0%); outline: none; -webkit-appearance: none; cursor: pointer; }
-        #timeline-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #3887be; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-        #timeline-slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #3887be; cursor: pointer; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-        #timeline-ticks { position: absolute; top: 0; left: 0; right: 0; height: 6px; pointer-events: none; }
-        .timeline-tick { position: absolute; width: 2px; height: 12px; background: #666; top: 8px; }
-        .timeline-tick-label { position: absolute; font-size: 11px; color: #666; transform: translateX(-50%); top: 24px; white-space: nowrap; }
-        @media (max-width: 900px) { #timeline-container { width: calc(100% - 32px); bottom: 110px; } }
+        @media (max-width: 900px) { #charts-panel { display: none; } }
         @media (max-width: 600px) { #menu { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; border-radius: 0; transform: translateX(-100%); overflow-y: auto; transition: transform 0.2s ease; } #menu.open { transform: translateX(0); } #menu-toggle { display: flex; } #menu-close { display: flex; } #legend { bottom: 100px; right: 10px; left: 10px; } }
     </style>
 </head>
@@ -90,6 +82,13 @@
 <div id="custom-attribution"><a href="https://www.mapbox.com/about/maps/" target="_blank">© Mapbox</a> | <a href="http://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap</a></div>
 <div id="menu">
     <div id="menu-header"><h3>Настройки</h3><button id="menu-close">✕</button></div>
+    <h4>Год</h4>
+    <div class="select-wrapper"><select id="year-select"></select></div>
+    <h4>Сезон</h4>
+    <div class="horizon-group">
+        <button class="season-btn active" data-value="spring">Весна</button>
+        <button class="season-btn" data-value="autumn">Осень</button>
+    </div>
     <h4>Параметр</h4>
     <div class="layer-group">
         <button id="btn-oxygen-points" class="active" data-param="oxygen">Кислород</button>
@@ -104,27 +103,18 @@
     <button id="download-btn" style="width: 100%; margin-top: 16px; padding: 12px; border: none; background: linear-gradient(135deg, #3887be, #2d6a9f); color: white; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.15s ease;">📥 Скачать карту</button>
 </div>
 <div id="legend"></div>
-<div id="timeline-container">
-    <div id="timeline-header">
-        <span id="timeline-current-date">Дата не выбрана</span>
-        <button id="timeline-play-btn">▶</button>
-    </div>
-    <div id="timeline-slider-wrapper">
-        <input type="range" id="timeline-slider" min="0" max="100" value="0">
-        <div id="timeline-ticks"></div>
-    </div>
+<div id="charts-panel" style="display: none;">
+    <h4 id="charts-title">Временные ряды</h4>
+    <div class="chart-container"><h5>Температура, °C</h5><div class="chart-wrapper"><canvas id="temp-chart"></canvas></div></div>
+    <div class="chart-container"><h5>Солёность, PSU</h5><div class="chart-wrapper"><canvas id="salinity-chart"></canvas></div></div>
 </div>
 <script>
 // Публичный токен Mapbox (безопасен для браузерного использования)
 mapboxgl.accessToken = 'pk.eyJ1IjoiYm9sZWc5MzQiLCJhIjoiY2syY3pjeXFyMjN5aTNobzZmZGl5cng3aiJ9.ADhGQN0rFnGwPCk53capfQ';
 const map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/light-v10', center: [132.026960, 43.130572], zoom: 8.95, attributionControl: false, preserveDrawingBuffer: true });
 const config = { scales: { oxygen: { title: 'Кислород, мг/л', prop: 'oxygen_mgl', format: 1, breaks: [6, 8, 10], bands: ['#f46d43', '#d9ef8b', '#a6d96a', '#66bd63'], sizeConfig: { base: 16 } }, ph: { title: 'pH', prop: 'ph', format: 2, bands: ['#eff3ff', '#bdd7e7', '#6baed6'], sizeConfig: { base: 18 } } }, firstLabelLayerId: 'waterway-label' };
-let fullData = [];
+let tempChart = null, salinityChart = null, fullData = [];
 let state = { activeParam: 'oxygen', showLabels: false, horizon: '0', year: null, season: 'spring', selectedStation: null };
-let timelineDates = [];
-let timelineIndex = 0;
-let timelineInterval = null;
-let popupCharts = { active: null, others: null };
 
 function formatNumber(value, decimalPlaces) { if (typeof value !== 'number' || !isFinite(value)) return 'н/д'; return value.toFixed(decimalPlaces).replace('.', ','); }
 function formatFullDateTime(dateStr, timeStr) { if (!dateStr || !timeStr) return 'Нет данных'; const dateParts = String(dateStr).split('/'); const timeParts = String(timeStr).split(':'); if (dateParts.length !== 3 || timeParts.length < 2) return 'Неверный формат'; const [month, day, year] = dateParts; const [hour, minute] = timeParts; return `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.${year} ${hour}:${minute}`; }
@@ -153,6 +143,25 @@ function updateLegend() {
 function parseDateTime(dateStr, timeStr) { if (!dateStr || !timeStr) return null; const dateParts = String(dateStr).split('/'); const timeParts = String(timeStr).split(':'); if (dateParts.length !== 3 || timeParts.length < 2) return null; const [month, day, year] = dateParts; const [hour, minute] = timeParts; return new Date(year, month - 1, day, hour, minute); }
 function getSeason(dateStr) { if (!dateStr) return null; const dateParts = String(dateStr).split('/'); if (dateParts.length !== 3) return null; const month = parseInt(dateParts[0]); if (month >= 3 && month <= 5) return 'spring'; if (month >= 9 && month <= 11) return 'autumn'; return null; }
 
+function updateCharts() {
+    if (!state.selectedStation) {
+        document.getElementById('charts-panel').style.display = 'none';
+        return;
+    }
+    document.getElementById('charts-panel').style.display = 'block';
+    document.getElementById('charts-title').textContent = `Временные ряды – Станция ${state.selectedStation}`;
+
+    let stationFeatures = fullData.filter(f => f.properties.station_id === state.selectedStation);
+    stationFeatures = stationFeatures.filter(f => getSeason(f.properties.date) === state.season);
+    const filteredFeatures = stationFeatures.filter(f => String(f.properties.horizon) === state.horizon);
+    const dataPoints = filteredFeatures.map(f => ({ datetime: parseDateTime(f.properties.date, f.properties.time), temp: f.properties.temp_c, salinity: f.properties.salinity_psu, station: f.properties.station_id, year: String(f.properties.date).split('/')[2] })).filter(d => d.datetime !== null).sort((a, b) => a.datetime - b.datetime);
+    const labels = dataPoints.map(d => { const day = String(d.datetime.getDate()).padStart(2, '0'); const month = String(d.datetime.getMonth() + 1).padStart(2, '0'); const hour = String(d.datetime.getHours()).padStart(2, '0'); const min = String(d.datetime.getMinutes()).padStart(2, '0'); return `${day}.${month}.${d.year} ${hour}:${min}`; });
+    const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { title: (items) => `Ст. ${dataPoints[items[0].dataIndex].station}\n${labels[items[0].dataIndex]}` } } }, scales: { x: { ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } }, grid: { display: false } }, y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { font: { size: 10 } } } }, elements: { point: { radius: 3, hoverRadius: 5 }, line: { tension: 0.3, borderWidth: 2 } } };
+    if (tempChart) tempChart.destroy(); if (salinityChart) salinityChart.destroy();
+    tempChart = new Chart(document.getElementById('temp-chart').getContext('2d'), { type: 'line', data: { labels, datasets: [{ data: dataPoints.map(d => d.temp), borderColor: '#f46d43', backgroundColor: 'rgba(244,109,67,0.1)', fill: true }] }, options: chartOptions });
+    salinityChart = new Chart(document.getElementById('salinity-chart').getContext('2d'), { type: 'line', data: { labels, datasets: [{ data: dataPoints.map(d => d.salinity), borderColor: '#41b6c4', backgroundColor: 'rgba(65,182,196,0.1)', fill: true }] }, options: chartOptions });
+}
+
 function updateLayers() {
     let yearFilteredFeatures = fullData.filter(f => String(f.properties.date).split('/')[2] === state.year);
     yearFilteredFeatures = yearFilteredFeatures.filter(f => getSeason(f.properties.date) === state.season);
@@ -175,130 +184,7 @@ function updateLayers() {
         if (map.getLayer(pointLayerId)) map.setLayoutProperty(pointLayerId, 'visibility', isActive ? 'visible' : 'none');
         if (map.getLayer(labelLayerId)) map.setLayoutProperty(labelLayerId, 'visibility', isActive && state.showLabels ? 'visible' : 'none');
     });
-    updateLegend();
-}
-
-function destroyPopupCharts() {
-    if (popupCharts.active) { popupCharts.active.destroy(); popupCharts.active = null; }
-    if (popupCharts.others) { popupCharts.others.destroy(); popupCharts.others = null; }
-}
-
-function createPopupCharts(dataPoints, labels, currentDateIndex) {
-    destroyPopupCharts();
-    const pointBackgroundColors = labels.map((_, idx) => idx === currentDateIndex ? 'rgba(255, 99, 132, 1)' : 'rgba(56, 135, 190, 0.8)');
-    const pointRadius = labels.map((_, idx) => idx === currentDateIndex ? 8 : 4);
-    const pointBorderWidth = labels.map((_, idx) => idx === currentDateIndex ? 3 : 1);
-    const activeParam = state.activeParam;
-    const activeData = dataPoints.map(d => activeParam === 'oxygen' ? d.oxygen : d.ph);
-    const activeColor = activeParam === 'oxygen' ? '#f46d43' : '#6baed6';
-    const activeCtx = document.getElementById('popup-active-chart').getContext('2d');
-    popupCharts.active = new Chart(activeCtx, { type: 'line', data: { labels, datasets: [{ label: activeParam === 'oxygen' ? 'Кислород, мг/л' : 'pH', data: activeData, borderColor: activeColor, backgroundColor: `${activeColor}20`, fill: true, pointBackgroundColor: pointBackgroundColors, pointBorderColor: '#fff', pointRadius: pointRadius, pointBorderWidth: pointBorderWidth, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { title: (items) => labels[items[0].dataIndex] } } }, scales: { x: { ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } }, grid: { display: false } }, y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { font: { size: 10 } } } } } });
-    const othersDatasets = [];
-    othersDatasets.push({ label: 'Температура, °C', data: dataPoints.map(d => d.temp), borderColor: '#ff7f0e', backgroundColor: 'rgba(255, 127, 14, 0.1)', yAxisID: 'y-temp', pointBackgroundColor: pointBackgroundColors, pointBorderColor: '#fff', pointRadius: pointRadius.map(r => r - 1), pointBorderWidth: 1, tension: 0.3 });
-    othersDatasets.push({ label: 'Солёность, PSU', data: dataPoints.map(d => d.salinity), borderColor: '#41b6c4', backgroundColor: 'rgba(65, 182, 196, 0.1)', yAxisID: 'y-salinity', pointBackgroundColor: pointBackgroundColors, pointBorderColor: '#fff', pointRadius: pointRadius.map(r => r - 1), pointBorderWidth: 1, tension: 0.3 });
-    if (activeParam !== 'oxygen') { othersDatasets.push({ label: 'Кислород, мг/л', data: dataPoints.map(d => d.oxygen), borderColor: '#f46d43', backgroundColor: 'rgba(244, 109, 67, 0.1)', yAxisID: 'y-oxygen', pointBackgroundColor: pointBackgroundColors, pointBorderColor: '#fff', pointRadius: pointRadius.map(r => r - 1), pointBorderWidth: 1, tension: 0.3 }); }
-    else { othersDatasets.push({ label: 'pH', data: dataPoints.map(d => d.ph), borderColor: '#6baed6', backgroundColor: 'rgba(107, 174, 214, 0.1)', yAxisID: 'y-ph', pointBackgroundColor: pointBackgroundColors, pointBorderColor: '#fff', pointRadius: pointRadius.map(r => r - 1), pointBorderWidth: 1, tension: 0.3 }); }
-    const othersCtx = document.getElementById('popup-others-chart').getContext('2d');
-    popupCharts.others = new Chart(othersCtx, { type: 'line', data: { labels, datasets: othersDatasets }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12, padding: 8 } }, tooltip: { callbacks: { title: (items) => labels[items[0].dataIndex] } } }, scales: { x: { ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } }, grid: { display: false } }, 'y-temp': { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Темп., °C', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { font: { size: 9 } } }, 'y-salinity': { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Солён., PSU', font: { size: 10 } }, grid: { drawOnChartArea: false }, ticks: { font: { size: 9 } } }, 'y-oxygen': activeParam !== 'oxygen' ? { type: 'linear', display: false, position: 'right' } : undefined, 'y-ph': activeParam === 'oxygen' ? { type: 'linear', display: false, position: 'right' } : undefined } } });
-}
-
-function createPopupWithCharts(lngLat, stationId) {
-    const stationFeatures = fullData.filter(f => f.properties.station_id === stationId && String(f.properties.horizon) === state.horizon);
-    const dataPoints = stationFeatures.map(f => ({ datetime: parseDateTime(f.properties.date, f.properties.time), date: f.properties.date, time: f.properties.time, temp: f.properties.temp_c, salinity: f.properties.salinity_psu, oxygen: f.properties.oxygen_mgl, ph: f.properties.ph })).filter(d => d.datetime !== null).sort((a, b) => a.datetime - b.datetime);
-    if (dataPoints.length === 0) { new mapboxgl.Popup().setLngLat(lngLat).setHTML(`<div style="padding:16px;">Нет данных для станции ${stationId}</div>`).addTo(map); return; }
-    const labels = dataPoints.map(d => { const day = String(d.datetime.getDate()).padStart(2, '0'); const month = String(d.datetime.getMonth() + 1).padStart(2, '0'); const year = d.datetime.getFullYear(); return `${day}.${month}.${year}`; });
-    const currentDateIndex = dataPoints.findIndex(d => { const year = String(d.date).split('/')[2]; const season = getSeason(d.date); return year === state.year && season === state.season; });
-    const popupHTML = `<div class="popup-chart-container"><h5>${state.activeParam === 'oxygen' ? 'Кислород, мг/л' : 'pH'}</h5><div class="popup-chart-wrapper"><canvas id="popup-active-chart"></canvas></div></div><div class="popup-divider"></div><div class="popup-chart-container"><h5>Остальные параметры</h5><div class="popup-chart-wrapper"><canvas id="popup-others-chart"></canvas></div></div>`;
-    const popup = new mapboxgl.Popup({ maxWidth: '700px' }).setLngLat(lngLat).setHTML(popupHTML).addTo(map);
-    popup.on('open', () => { createPopupCharts(dataPoints, labels, currentDateIndex); });
-    popup.on('close', () => { destroyPopupCharts(); });
-}
-
-function buildTimeline() {
-    const dateMap = new Map();
-    fullData.forEach(f => {
-        const dateStr = f.properties.date;
-        const year = String(dateStr).split('/')[2];
-        const season = getSeason(dateStr);
-        if (year && season) {
-            const key = `${year}-${season}`;
-            if (!dateMap.has(key)) {
-                const seasonLabel = season === 'spring' ? 'Весна' : 'Осень';
-                dateMap.set(key, { year: year, season: season, label: `${seasonLabel} ${year}`, key: key });
-            }
-        }
-    });
-    timelineDates = Array.from(dateMap.values()).sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year;
-        return a.season === 'spring' ? -1 : 1;
-    });
-    const slider = document.getElementById('timeline-slider');
-    slider.max = timelineDates.length - 1;
-    slider.value = timelineDates.length - 1;
-    timelineIndex = timelineDates.length - 1;
-    if (timelineDates.length > 0) {
-        const current = timelineDates[timelineIndex];
-        state.year = current.year;
-        state.season = current.season;
-        updateTimelineDisplay();
-    }
-    renderTimelineTicks();
-}
-
-function renderTimelineTicks() {
-    const ticksContainer = document.getElementById('timeline-ticks');
-    ticksContainer.innerHTML = '';
-    const step = Math.max(1, Math.ceil(timelineDates.length / 8));
-    timelineDates.forEach((date, index) => {
-        if (index % step === 0 || index === timelineDates.length - 1) {
-            const percent = (index / (timelineDates.length - 1)) * 100;
-            const tick = document.createElement('div');
-            tick.className = 'timeline-tick';
-            tick.style.left = `${percent}%`;
-            const label = document.createElement('div');
-            label.className = 'timeline-tick-label';
-            label.textContent = date.label;
-            label.style.left = `${percent}%`;
-            ticksContainer.appendChild(tick);
-            ticksContainer.appendChild(label);
-        }
-    });
-}
-
-function updateTimelineDisplay() {
-    const current = timelineDates[timelineIndex];
-    document.getElementById('timeline-current-date').textContent = current.label;
-    const slider = document.getElementById('timeline-slider');
-    const percent = (timelineIndex / (timelineDates.length - 1)) * 100;
-    slider.style.background = `linear-gradient(to right, #3887be ${percent}%, #e0e0e0 ${percent}%)`;
-}
-
-function onTimelineChange(newIndex) {
-    timelineIndex = newIndex;
-    const current = timelineDates[timelineIndex];
-    state.year = current.year;
-    state.season = current.season;
-    updateTimelineDisplay();
-    updateLayers();
-}
-
-function toggleTimelinePlay() {
-    const btn = document.getElementById('timeline-play-btn');
-    if (timelineInterval) {
-        clearInterval(timelineInterval);
-        timelineInterval = null;
-        btn.textContent = '▶';
-    } else {
-        btn.textContent = '⏸';
-        timelineInterval = setInterval(() => {
-            let nextIndex = timelineIndex + 1;
-            if (nextIndex >= timelineDates.length) {
-                nextIndex = 0;
-            }
-            document.getElementById('timeline-slider').value = nextIndex;
-            onTimelineChange(nextIndex);
-        }, 1500);
-    }
+    updateLegend(); updateCharts();
 }
 
 function downloadMapAsImage() {
@@ -411,13 +297,16 @@ function downloadMapAsImage() {
     });
 }
 
-function setupControls() {
+function setupControls(years) {
+    const yearSelect = document.getElementById('year-select');
+    yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    yearSelect.value = state.year;
+    yearSelect.addEventListener('change', e => { state.year = e.target.value; updateLayers(); });
     document.querySelectorAll('.layer-group button').forEach(btn => { btn.addEventListener('click', e => { document.querySelectorAll('.layer-group button').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); state.activeParam = e.target.dataset.param; updateLayers(); }); });
     document.querySelectorAll('.horizon-btn').forEach(btn => { btn.addEventListener('click', e => { document.querySelectorAll('.horizon-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); state.horizon = e.target.dataset.value; updateLayers(); }); });
+    document.querySelectorAll('.season-btn').forEach(btn => { btn.addEventListener('click', e => { document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active'); state.season = e.target.dataset.value; updateLayers(); }); });
     document.getElementById('show-labels').addEventListener('change', e => { state.showLabels = e.target.checked; updateLayers(); });
     document.getElementById('download-btn').addEventListener('click', downloadMapAsImage);
-    document.getElementById('timeline-slider').addEventListener('input', e => { onTimelineChange(parseInt(e.target.value)); });
-    document.getElementById('timeline-play-btn').addEventListener('click', toggleTimelinePlay);
     document.getElementById('menu-toggle').addEventListener('click', () => document.getElementById('menu').classList.add('open'));
     document.getElementById('menu-close').addEventListener('click', () => document.getElementById('menu').classList.remove('open'));
 }
@@ -434,11 +323,11 @@ async function initializeMap() {
         fullData = validData.map(p => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] }, properties: p }));
         Object.entries(config.scales).forEach(([param, paramConfig]) => { if (!paramConfig.breaks) { const surfaceData = fullData.filter(f => String(f.properties.horizon) === '0'); paramConfig.surfaceBreaks = generateDynamicBreaks(surfaceData, paramConfig.prop, paramConfig.bands.length); paramConfig.surfaceOutlierBounds = calculateOutlierBounds(surfaceData.map(f => f.properties[paramConfig.prop])); const bottomData = fullData.filter(f => String(f.properties.horizon) === 'дно'); paramConfig.bottomBreaks = generateDynamicBreaks(bottomData, paramConfig.prop, paramConfig.bands.length); paramConfig.bottomOutlierBounds = calculateOutlierBounds(bottomData.map(f => f.properties[paramConfig.prop])); } });
         if (fullData.length > 0) { const bounds = calculateBounds(fullData); map.fitBounds(bounds, { padding: 50, duration: 0 }); const sw = bounds.getSouthWest(), ne = bounds.getNorthEast(); const lngDiff = ne.lng - sw.lng, latDiff = ne.lat - sw.lat, padding = 0.2; map.setMaxBounds(new mapboxgl.LngLatBounds([sw.lng - lngDiff * padding, sw.lat - latDiff * padding], [ne.lng + lngDiff * padding, ne.lat + latDiff * padding])); }
+        const years = [...new Set(validData.map(p => String(p.date).split('/')[2]))].sort((a, b) => b - a); if (years.length > 0) state.year = years[0];
         map.addSource('points-source', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         Object.entries(config.scales).forEach(([param, scale]) => { map.addLayer({ id: `${param}-points-layer`, type: 'circle', source: 'points-source', layout: { visibility: 'none' }, paint: { 'circle-color': '#cccccc', 'circle-stroke-width': 1.5, 'circle-stroke-color': '#fff', 'circle-radius': scale.sizeConfig.base } }, config.firstLabelLayerId); map.addLayer({ id: `${param}-labels-layer`, type: 'symbol', source: 'points-source', layout: { visibility: 'none', 'text-field': ['get', `${scale.prop}_formatted`], 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'], 'text-size': 10.5, 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0, 0, 0, 0.85)', 'text-halo-width': 1.2 } }, config.firstLabelLayerId); });
-        setupControls();
-        buildTimeline();
-        Object.keys(config.scales).forEach(param => { map.on('click', `${param}-points-layer`, e => { const props = e.features[0].properties; state.selectedStation = props.station_id; createPopupWithCharts(e.lngLat, props.station_id); }); map.on('mouseenter', `${param}-points-layer`, () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', `${param}-points-layer`, () => map.getCanvas().style.cursor = ''); });
+        setupControls(years);
+        Object.keys(config.scales).forEach(param => { map.on('click', `${param}-points-layer`, e => { const props = e.features[0].properties; state.selectedStation = props.station_id; updateCharts(); new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(`<strong>Станция ${props.station_id}</strong><div class="popup-subheader">${props.bay}</div><div style="color:#888;font-size:12px;">Горизонт: ${props.horizon} · ${props.datetime_full_formatted}</div><table><tr><td>Температура</td><td>${props.temp_c_formatted}°C</td></tr><tr><td>Солёность</td><td>${props.salinity_psu_formatted} PSU</td></tr><tr><td>Кислород</td><td>${props.oxygen_mgl_formatted} мг/л</td></tr><tr><td>pH</td><td>${props.ph_formatted}</td></tr></table>`).addTo(map); }); map.on('mouseenter', `${param}-points-layer`, () => map.getCanvas().style.cursor = 'pointer'); map.on('mouseleave', `${param}-points-layer`, () => map.getCanvas().style.cursor = ''); });
         updateLayers();
         loader.style.opacity = 0; setTimeout(() => loader.style.display = 'none', 300);
     } catch (error) { console.error("Не удалось загрузить данные:", error); if (loaderText) { loader.querySelector('.spinner').style.display = 'none'; loaderText.innerHTML = "Ошибка загрузки данных.<br>Обновите страницу."; } }
