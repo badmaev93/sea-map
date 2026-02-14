@@ -146,7 +146,7 @@
 <script>
 // Публичный токен Mapbox (безопасен для браузерного использования)
 mapboxgl.accessToken = 'pk.eyJ1IjoiYm9sZWc5MzQiLCJhIjoiY21sbTlzY3U3MGZiaTNkcXgxenoxZWpneiJ9.hjWDN5nTDBTx5FDP_tm7pw';
-const map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/light-v11', center: [132.026960, 43.130572], zoom: 8.95, attributionControl: false, preserveDrawingBuffer: true });
+const map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/boleg934/cmlma3wb2003i01sec0ir5ysx', center: [132.026960, 43.130572], zoom: 8.95, attributionControl: false, preserveDrawingBuffer: true });
 const config = { scales: { oxygen: { title: 'Кислород, мг/л', prop: 'oxygen_mgl', format: 1, breaks: [6, 8, 10], bands: ['#f46d43', '#d9ef8b', '#a6d96a', '#66bd63'], sizeConfig: { base: 16 } }, ph: { title: 'pH', prop: 'ph', format: 2, bands: ['#eff3ff', '#bdd7e7', '#6baed6'], sizeConfig: { base: 18 } } }, firstLabelLayerId: 'waterway-label' };
 let paramChart = null, tempChart = null, salinityChart = null, fullData = [];
 let state = { activeParam: 'oxygen', showLabels: false, horizon: '0', year: null, season: 'spring', selectedStation: null };
@@ -690,5 +690,6 @@ map.on('load', () => { map.setLanguage('ru'); initializeMap(); });
 </script>
 </body>
 </html>
+
 
 
