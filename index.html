@@ -200,8 +200,8 @@ function updateCharts() {
         oxygen: f.properties.oxygen_mgl,
         ph: f.properties.ph,
         station: f.properties.station_id,
-        year: String(f.properties.date).split('/')[2],
-        season: getSeason(f.properties.date),
+        year: f.properties.year,
+        season: f.properties.season,
         date: f.properties.date
     })).filter(d => d.datetime !== null).sort((a, b) => a.datetime - b.datetime);
 
@@ -408,8 +408,8 @@ function updateCharts() {
 }
 
 function updateLayers() {
-    let yearFilteredFeatures = fullData.filter(f => String(f.properties.date).split('/')[2] === state.year);
-    yearFilteredFeatures = yearFilteredFeatures.filter(f => getSeason(f.properties.date) === state.season);
+    let yearFilteredFeatures = fullData.filter(f => f.properties.year === state.year);
+    yearFilteredFeatures = yearFilteredFeatures.filter(f => f.properties.season === state.season);
     const filteredFeatures = yearFilteredFeatures.filter(f => String(f.properties.horizon) === state.horizon);
     const source = map.getSource('points-source');
     if (source) source.setData({ type: 'FeatureCollection', features: filteredFeatures });
@@ -437,8 +437,8 @@ function buildTimeline() {
     const dateMap = new Map();
     fullData.forEach(f => {
         const dateStr = f.properties.date;
-        const year = String(dateStr).split('/')[2];
-        const season = getSeason(dateStr);
+        const year = f.properties.year;
+        const season = f.properties.season;
         if (year && season) {
             const key = `${year}-${season}`;
             if (!dateMap.has(key)) {
@@ -656,7 +656,12 @@ async function initializeMap() {
         const response = await fetchWithRetries('https://sea-data-api.onrender.com/api/data');
         const rawData = await response.json();
         const validData = rawData.filter(p => p.longitude != null && p.latitude != null);
-        validData.forEach(p => { p.datetime_full_formatted = formatFullDateTime(p.date, p.time); p.oxygen_mgl_formatted = formatNumber(p.oxygen_mgl, 1); p.temp_c_formatted = formatNumber(p.temp_c, 1); p.ph_formatted = formatNumber(p.ph, 2); p.salinity_psu_formatted = formatNumber(p.salinity_psu, 2); });
+
+        // ⚡ Bolt Optimization: Pre-compute and cache year and season on data load.
+        // What: Pre-computes year from date string splitting and season via getSeason().
+        // Why: Avoids repeatedly parsing strings (O(N) operations) during UI updates, filtering, and chart building.
+        // Impact: Eliminates thousands of redundant string split allocations on each render, making slider and layer toggles noticeably faster.
+        validData.forEach(p => { p.datetime_full_formatted = formatFullDateTime(p.date, p.time); p.oxygen_mgl_formatted = formatNumber(p.oxygen_mgl, 1); p.temp_c_formatted = formatNumber(p.temp_c, 1); p.ph_formatted = formatNumber(p.ph, 2); p.salinity_psu_formatted = formatNumber(p.salinity_psu, 2); p.year = String(p.date).split('/')[2]; p.season = getSeason(p.date); });
         fullData = validData.map(p => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] }, properties: p }));
         Object.entries(config.scales).forEach(([param, paramConfig]) => {
             if (!paramConfig.breaks) {
@@ -667,7 +672,7 @@ async function initializeMap() {
                         const key = `${season}_${horizon}`;
                         const filteredData = fullData.filter(f =>
                             String(f.properties.horizon) === horizon &&
-                            getSeason(f.properties.date) === season
+                            f.properties.season === season
                         );
                         paramConfig.seasonHorizonBreaks[key] = generateDynamicBreaks(filteredData, paramConfig.prop, paramConfig.bands.length);
                         paramConfig.seasonHorizonOutliers[key] = calculateOutlierBounds(filteredData.map(f => f.properties[paramConfig.prop]));
