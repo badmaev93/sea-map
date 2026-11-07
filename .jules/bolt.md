@@ -1,3 +1,3 @@
-## 2026-11-06 - Pre-computation over redundant recalculation
-**Learning:** Frontend interactions that trigger filters over thousands of objects can suffer heavily if calculations (like string parsing) are executed in the filter loop.
-**Action:** Always pre-compute and cache derived values directly on the data object upon fetch/load, if they don't change and are frequently filtered against on render.
+## 2024-03-22 - [Mapbox Filtering Optimization]
+**Learning:** Filtering a large array of points directly on the client multiple times during every state change (slider movement, toggle layer) can cause noticeable UI lag, especially as the dataset grows.
+**Action:** Replace sequential array `.filter()` passes with O(1) lookups by pre-grouping data during initialization. Ensure that initialization routines correctly reset cached dictionaries to avoid state leakage if the initial load is re-triggered without a page refresh.
