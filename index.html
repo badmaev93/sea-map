@@ -149,6 +149,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYm9sZWc5MzQiLCJhIjoiY21sbTlzY3U3MGZiaTNkcXgxe
 const map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/light-v11', center: [132.026960, 43.130572], zoom: 8.95, attributionControl: false, preserveDrawingBuffer: true });
 const config = { scales: { oxygen: { title: 'Кислород, мг/л', prop: 'oxygen_mgl', format: 1, breaks: [6, 8, 10], bands: ['#f46d43', '#d9ef8b', '#a6d96a', '#66bd63'], sizeConfig: { base: 16 } }, ph: { title: 'pH', prop: 'ph', format: 2, bands: ['#eff3ff', '#bdd7e7', '#6baed6'], sizeConfig: { base: 18 } } }, firstLabelLayerId: 'waterway-label' };
 let paramChart = null, tempChart = null, salinityChart = null, fullData = [];
+let groupedFeatures = {};
 let state = { activeParam: 'oxygen', showLabels: false, horizon: '0', year: null, season: 'spring', selectedStation: null };
 let timelineDates = [];
 let timelineIndex = 0;
@@ -409,9 +410,8 @@ function updateCharts() {
 }
 
 function updateLayers() {
-    let yearFilteredFeatures = fullData.filter(f => f.properties.year === state.year);
-    yearFilteredFeatures = yearFilteredFeatures.filter(f => f.properties.season === state.season);
-    const filteredFeatures = yearFilteredFeatures.filter(f => String(f.properties.horizon) === state.horizon);
+    const key = `${state.year}_${state.season}_${state.horizon}`;
+    const filteredFeatures = groupedFeatures[key] || [];
     const source = map.getSource('points-source');
     if (source) source.setData({ type: 'FeatureCollection', features: filteredFeatures });
     Object.keys(config.scales).forEach(param => {
@@ -664,6 +664,12 @@ async function initializeMap() {
         // Impact: Eliminates thousands of redundant string split allocations on each render, making slider and layer toggles noticeably faster.
         validData.forEach(p => { p.datetime_full_formatted = formatFullDateTime(p.date, p.time); p.oxygen_mgl_formatted = formatNumber(p.oxygen_mgl, 1); p.temp_c_formatted = formatNumber(p.temp_c, 1); p.ph_formatted = formatNumber(p.ph, 2); p.salinity_psu_formatted = formatNumber(p.salinity_psu, 2); p.year = String(p.date).split('/')[2]; p.season = getSeason(p.date); });
         fullData = validData.map(p => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] }, properties: p }));
+        groupedFeatures = {};
+        fullData.forEach(f => {
+            const key = `${f.properties.year}_${f.properties.season}_${f.properties.horizon}`;
+            if (!groupedFeatures[key]) groupedFeatures[key] = [];
+            groupedFeatures[key].push(f);
+        });
         Object.entries(config.scales).forEach(([param, paramConfig]) => {
             if (!paramConfig.breaks) {
                 paramConfig.seasonHorizonBreaks = {};
