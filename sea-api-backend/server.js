@@ -9,6 +9,17 @@ const coastlineData = require('@geo-maps/countries-coastline-1m');
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.disable('x-powered-by');
+
+// Add security headers
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    next();
+});
+
 app.use(cors());
 app.use(express.json());
 
@@ -169,6 +180,13 @@ async function startServer() {
             if (!year || !horizon || !param) {
                 return res.status(400).json({
                     error: 'Недостаточно параметров: требуются year, horizon, param'
+                });
+            }
+
+            // Security enhancement: Validate year format (4 digits)
+            if (!/^\d{4}$/.test(year)) {
+                return res.status(400).json({
+                    error: 'Недопустимый формат года. Ожидается 4 цифры.'
                 });
             }
 
