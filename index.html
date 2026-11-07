@@ -16,6 +16,7 @@
         #menu-header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px; }
         #menu-close { width: 28px; height: 28px; border-radius: 8px; background: transparent; border: none; cursor: pointer; font-size: 18px; color: #666; display: none; align-items: center; justify-content: center; }
         #menu-close:hover { background: rgba(0,0,0,0.06); }
+        :focus-visible { outline: 2px solid #3887be; outline-offset: 2px; }
         #menu h4 { margin: 16px 0 10px 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #888; }
         #menu h4:first-of-type { margin-top: 0; }
         .layer-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -111,7 +112,7 @@
         <button class="horizon-btn" data-value="дно">Дно</button>
     </div>
     <div class="toggle-row">
-        <span>Показывать подписи</span>
+        <label for="show-labels" style="cursor: pointer; display: inline-block;">Показывать подписи</label>
         <div style="display: flex; gap: 8px; align-items: center;">
             <label class="toggle-switch"><input type="checkbox" id="show-labels"><span class="toggle-slider"></span></label>
             <button id="download-btn" aria-label="Скачать карту" title="Скачать карту" style="width: 70px; height: 28px; padding: 0; border: none; background: white; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;">
@@ -131,7 +132,7 @@
         <button id="timeline-play-btn" aria-label="Воспроизвести анимацию" title="Воспроизвести анимацию" style="width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #4a9fd6, #3887be); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: transform 0.1s; flex-shrink: 0; margin-left: auto;">▶</button>
     </div>
     <div id="timeline-zones"></div>
-    <input type="range" id="timeline-slider" min="0" max="100" value="0">
+    <input type="range" id="timeline-slider" min="0" max="100" value="0" aria-label="Временная шкала">
     <div id="timeline-label"></div>
 </div>
 <div id="charts-panel" style="display: none;">
