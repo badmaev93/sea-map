@@ -345,69 +345,47 @@ function updateCharts() {
         }
     });
 
-    if (paramChart) paramChart.destroy();
-    if (tempChart) tempChart.destroy();
-    if (salinityChart) salinityChart.destroy();
-
     const paramConfig = config.scales[state.activeParam];
     const paramTitleParts = paramConfig.title.split(', ');
     document.getElementById('param-chart-title').innerHTML = `${paramTitleParts[0]} <span style="font-size:9px;opacity:0.6;">${paramTitleParts[1] || ''}</span>`;
     const paramData = dataPoints.map(d => state.activeParam === 'oxygen' ? d.oxygen : d.ph);
     const paramColor = state.activeParam === 'oxygen' ? '#f46d43' : '#6baed6';
 
-    paramChart = new Chart(document.getElementById('param-chart').getContext('2d'), {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                data: paramData,
-                borderColor: paramColor,
-                backgroundColor: `${paramColor}20`,
-                fill: true,
-                pointBackgroundColor: createPointColors(paramColor),
-                pointBorderColor: createPointColors(paramColor),
-                pointRadius: pointRadius
-            }]
-        },
-        options: createChartOptions(),
-        plugins: [seasonLabelsPlugin]
-    });
+    const updateOrCreateChart = (chart, ctxId, color, bgColor, data) => {
+        if (chart) {
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
+            chart.data.datasets[0].borderColor = color;
+            chart.data.datasets[0].backgroundColor = bgColor;
+            chart.data.datasets[0].pointBackgroundColor = createPointColors(color);
+            chart.data.datasets[0].pointBorderColor = createPointColors(color);
+            chart.data.datasets[0].pointRadius = pointRadius;
+            chart.options = createChartOptions();
+            chart.update('none');
+            return chart;
+        }
+        return new Chart(document.getElementById(ctxId).getContext('2d'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    data, borderColor: color, backgroundColor: bgColor, fill: true,
+                    pointBackgroundColor: createPointColors(color),
+                    pointBorderColor: createPointColors(color), pointRadius
+                }]
+            },
+            options: createChartOptions(),
+            plugins: [seasonLabelsPlugin]
+        });
+    };
 
-    tempChart = new Chart(document.getElementById('temp-chart').getContext('2d'), {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                data: dataPoints.map(d => d.temp),
-                borderColor: '#ff7f0e',
-                backgroundColor: 'rgba(255, 127, 14, 0.1)',
-                fill: true,
-                pointBackgroundColor: createPointColors('#ff7f0e'),
-                pointBorderColor: createPointColors('#ff7f0e'),
-                pointRadius: pointRadius
-            }]
-        },
-        options: createChartOptions(),
-        plugins: [seasonLabelsPlugin]
-    });
-
-    salinityChart = new Chart(document.getElementById('salinity-chart').getContext('2d'), {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                data: dataPoints.map(d => d.salinity),
-                borderColor: '#41b6c4',
-                backgroundColor: 'rgba(65,182,196,0.1)',
-                fill: true,
-                pointBackgroundColor: createPointColors('#41b6c4'),
-                pointBorderColor: createPointColors('#41b6c4'),
-                pointRadius: pointRadius
-            }]
-        },
-        options: createChartOptions(),
-        plugins: [seasonLabelsPlugin]
-    });
+    // ⚡ Bolt Optimization: Reuse Chart.js instances instead of destroying/recreating them.
+    // What: Updates chart data and styles in-place and calls chart.update('none') instead of chart.destroy() and new Chart().
+    // Why: Destroying and creating canvas elements on every timeline tick causes massive layout thrashing, forces JS garbage collection, and creates lag during playback or slider dragging.
+    // Impact: Drastically reduces main-thread blocking time on slider input, resulting in silky smooth timeline scrubbing.
+    paramChart = updateOrCreateChart(paramChart, 'param-chart', paramColor, `${paramColor}20`, paramData);
+    tempChart = updateOrCreateChart(tempChart, 'temp-chart', '#ff7f0e', 'rgba(255, 127, 14, 0.1)', dataPoints.map(d => d.temp));
+    salinityChart = updateOrCreateChart(salinityChart, 'salinity-chart', '#41b6c4', 'rgba(65,182,196,0.1)', dataPoints.map(d => d.salinity));
 }
 
 function updateLayers() {
