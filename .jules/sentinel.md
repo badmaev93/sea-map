@@ -1,5 +1,10 @@
 ## Sentinel's Journal
 
+## 2024-05-19 - [Missing Rate Limiting on API]
+**Vulnerability:** The backend Express API endpoints (`/api/data`, `/api/isolines`) had no request rate limits applied.
+**Learning:** An attacker could easily write a loop to spam the API, potentially crashing the server or exhausting resources (Memory, CPU, bandwidth) and causing a Denial of Service (DoS), especially given the heavy turf.js geographical calculations on the server.
+**Prevention:** Implementing a lightweight, in-memory rate limiting middleware on the Express server ensures no single IP can make an excessive number of requests in a given timeframe.
+
 ## 2024-05-18 - [Exposed Mapbox Access Token]
 **Vulnerability:** A Mapbox access token is hardcoded in index.html (mapboxgl.accessToken).
 **Learning:** Hardcoded access tokens on frontend clients allow anyone viewing the source code to steal the token and use it to consume the API quota, leading to a potential denial of wallet/service.

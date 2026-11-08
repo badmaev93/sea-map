@@ -11,6 +11,41 @@ const port = process.env.PORT || 3000;
 
 app.disable('x-powered-by');
 
+// 🛡️ Sentinel: Rate Limiting Middleware
+const rateLimitMap = new Map();
+app.use((req, res, next) => {
+    const ip = req.ip || req.connection.remoteAddress;
+    const now = Date.now();
+    const windowMs = 60 * 1000; // 1 minute
+    const maxRequests = 100; // limit each IP to 100 requests per windowMs
+
+    if (!rateLimitMap.has(ip)) {
+        rateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
+        return next();
+    }
+
+    const limitInfo = rateLimitMap.get(ip);
+    if (now > limitInfo.resetTime) {
+        limitInfo.count = 1;
+        limitInfo.resetTime = now + windowMs;
+        return next();
+    }
+
+    limitInfo.count++;
+    if (limitInfo.count > maxRequests) {
+        return res.status(429).json({ error: 'Too many requests, please try again later.' });
+    }
+    next();
+});
+
+// Clean up expired rate limit entries to prevent memory leaks
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, info] of rateLimitMap.entries()) {
+        if (now > info.resetTime) rateLimitMap.delete(ip);
+    }
+}, 5 * 60 * 1000).unref();
+
 // Add security headers
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
