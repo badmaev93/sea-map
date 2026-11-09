@@ -604,8 +604,16 @@ function setupControls() {
             clearInterval(timelineInterval);
             timelineInterval = null;
             playBtn.textContent = '▶';
+            playBtn.setAttribute('aria-label', 'Воспроизвести анимацию');
+            playBtn.setAttribute('title', 'Воспроизвести анимацию');
         } else {
+            if (timelineIndex >= timelineDates.length - 1) {
+                onTimelineChange(0);
+                document.getElementById('timeline-slider').value = 0;
+            }
             playBtn.textContent = '⏸';
+            playBtn.setAttribute('aria-label', 'Приостановить анимацию');
+            playBtn.setAttribute('title', 'Приостановить анимацию');
             timelineInterval = setInterval(() => {
                 if (timelineIndex < timelineDates.length - 1) {
                     onTimelineChange(timelineIndex + 1);
@@ -614,6 +622,8 @@ function setupControls() {
                     clearInterval(timelineInterval);
                     timelineInterval = null;
                     playBtn.textContent = '▶';
+                    playBtn.setAttribute('aria-label', 'Воспроизвести анимацию');
+                    playBtn.setAttribute('title', 'Воспроизвести анимацию');
                 }
             }, 1000);
         }
