@@ -9,10 +9,13 @@ const coastlineData = require('@geo-maps/countries-coastline-1m');
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.set('trust proxy', 1); // Trust first proxy (Render, Heroku, etc.) to get correct client IP
 app.disable('x-powered-by');
 
 // 🛡️ Sentinel: Rate Limiting Middleware
 const rateLimitMap = new Map();
+const MAX_RATE_LIMIT_ENTRIES = 10000; // Prevent OOM by capping unique IPs in tracking map
+
 app.use((req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress;
     const now = Date.now();
@@ -20,6 +23,12 @@ app.use((req, res, next) => {
     const maxRequests = 100; // limit each IP to 100 requests per windowMs
 
     if (!rateLimitMap.has(ip)) {
+        // Prevent memory exhaustion attack
+        if (rateLimitMap.size >= MAX_RATE_LIMIT_ENTRIES) {
+            // Cleanup expired early, or if still full, deny new connections temporarily
+            const iter = rateLimitMap.keys();
+            rateLimitMap.delete(iter.next().value); // Evict oldest/first
+        }
         rateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
         return next();
     }
@@ -52,11 +61,12 @@ app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none';");
     next();
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 
 const isolinesCache = new Map();
 
