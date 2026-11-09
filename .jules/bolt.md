@@ -4,3 +4,6 @@
 ## 2025-02-12 - Reusing Chart.js instances for smoother timeline scrubbing
 **Learning:** In a UI where charts update frequently based on a timeline slider, calling `chart.destroy()` and creating a `new Chart(...)` on every state change causes significant layout thrashing, forces JS garbage collection, and creates main-thread blocking, leading to visual lag.
 **Action:** Instead of destroying and recreating charts, update the `chart.data` and `chart.options` in place, then call `chart.update('none')` to skip animations. This provides a much smoother UI experience during rapid updates like timeline scrubbing.
+## 2025-02-28 - [Mapbox style updates memoization]
+**Learning:** During timeline scrubbing in Mapbox, updating layout and paint properties that haven't actually changed causes expensive WebGL shader invalidations and DOM thrashing (in the legend), severely impacting framerate.
+**Action:** Always memoize Mapbox `setLayoutProperty`, `setPaintProperty` and associated heavy DOM updates based on a derived state key if only the underlying data layer is expected to change during an interaction (like a timeline slider).
