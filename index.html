@@ -153,6 +153,7 @@ const map = new mapboxgl.Map({ container: 'map', style: 'mapbox://styles/mapbox/
 const config = { scales: { oxygen: { title: 'Кислород, мг/л', prop: 'oxygen_mgl', format: 1, breaks: [6, 8, 10], bands: ['#f46d43', '#d9ef8b', '#a6d96a', '#66bd63'], sizeConfig: { base: 16 } }, ph: { title: 'pH', prop: 'ph', format: 2, bands: ['#eff3ff', '#bdd7e7', '#6baed6'], sizeConfig: { base: 18 } } }, firstLabelLayerId: 'waterway-label' };
 let paramChart = null, tempChart = null, salinityChart = null, fullData = [];
 let groupedFeatures = {};
+let stationDataCache = {};
 let state = { activeParam: 'oxygen', showLabels: false, horizon: '0', year: null, season: 'spring', selectedStation: null };
 let timelineDates = [];
 let timelineIndex = 0;
@@ -197,19 +198,27 @@ function updateCharts() {
     const horizonText = state.horizon === '0' ? 'Поверхность' : 'Дно';
     document.getElementById('charts-title').textContent = `Станция ${state.selectedStation} - Горизонт: ${horizonText}`;
 
-    let stationFeatures = fullData.filter(f => f.properties.station_id === state.selectedStation);
-    const filteredFeatures = stationFeatures.filter(f => String(f.properties.horizon) === state.horizon);
-    const dataPoints = filteredFeatures.map(f => ({
-        datetime: parseDateTime(f.properties.date, f.properties.time),
-        temp: f.properties.temp_c,
-        salinity: f.properties.salinity_psu,
-        oxygen: f.properties.oxygen_mgl,
-        ph: f.properties.ph,
-        station: f.properties.station_id,
-        year: f.properties.year,
-        season: f.properties.season,
-        date: f.properties.date
-    })).filter(d => d.datetime !== null).sort((a, b) => a.datetime - b.datetime);
+    // ⚡ Bolt Optimization: Memoize chart data per station and horizon.
+    // What: Cache the expensive array filtering, string parsing, and date sorting operations.
+    // Why: Recalculating static historical data for the selected station on every timeline tick or layer toggle blocks the main thread.
+    // Impact: Substantially reduces main-thread work when the timeline slider is scrubbed while a chart is open.
+    const cacheKey = `${state.selectedStation}_${state.horizon}`;
+    if (!stationDataCache[cacheKey]) {
+        let stationFeatures = fullData.filter(f => f.properties.station_id === state.selectedStation);
+        const filteredFeatures = stationFeatures.filter(f => String(f.properties.horizon) === state.horizon);
+        stationDataCache[cacheKey] = filteredFeatures.map(f => ({
+            datetime: parseDateTime(f.properties.date, f.properties.time),
+            temp: f.properties.temp_c,
+            salinity: f.properties.salinity_psu,
+            oxygen: f.properties.oxygen_mgl,
+            ph: f.properties.ph,
+            station: f.properties.station_id,
+            year: f.properties.year,
+            season: f.properties.season,
+            date: f.properties.date
+        })).filter(d => d.datetime !== null).sort((a, b) => a.datetime - b.datetime);
+    }
+    const dataPoints = stationDataCache[cacheKey];
 
     const monthNames = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
     const labels = dataPoints.map(d => monthNames[d.datetime.getMonth()]);
@@ -667,6 +676,7 @@ async function initializeMap() {
         validData.forEach(p => { p.datetime_full_formatted = formatFullDateTime(p.date, p.time); p.oxygen_mgl_formatted = formatNumber(p.oxygen_mgl, 1); p.temp_c_formatted = formatNumber(p.temp_c, 1); p.ph_formatted = formatNumber(p.ph, 2); p.salinity_psu_formatted = formatNumber(p.salinity_psu, 2); p.year = String(p.date).split('/')[2]; p.season = getSeason(p.date); });
         fullData = validData.map(p => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] }, properties: p }));
         groupedFeatures = {};
+        stationDataCache = {};
         fullData.forEach(f => {
             const key = `${f.properties.year}_${f.properties.season}_${f.properties.horizon}`;
             if (!groupedFeatures[key]) groupedFeatures[key] = [];
