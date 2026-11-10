@@ -102,7 +102,7 @@
 <div id="custom-logo"><img src="https://raw.githubusercontent.com/badmaev93/sea-map/refs/heads/main/150_logo75.png" alt="ДВНИГМИ"></div>
 <div id="custom-attribution"><a href="https://www.mapbox.com/about/maps/" target="_blank">© Mapbox</a> | <a href="http://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap</a></div>
 <div id="menu">
-    <div id="menu-header"><button id="menu-close" aria-label="Закрыть меню" title="Закрыть меню">✕</button></div>
+    <div id="menu-header"><button id="menu-close" aria-label="Закрыть меню (Esc)" title="Закрыть меню (Esc)">✕</button></div>
     <h4>Параметр</h4>
     <div class="layer-group">
         <button id="btn-oxygen-points" class="active" data-param="oxygen" aria-pressed="true">Кислород</button>
@@ -140,7 +140,7 @@
 <div id="charts-panel" style="display: none;">
     <div id="charts-header">
         <h4 id="charts-title">Временные ряды</h4>
-        <button id="charts-close-btn" aria-label="Закрыть графики" title="Закрыть графики">✕</button>
+        <button id="charts-close-btn" aria-label="Закрыть графики (Esc)" title="Закрыть графики (Esc)">✕</button>
     </div>
     <div class="chart-container"><h5 id="param-chart-title">Кислород <span style="font-size:8px;opacity:0.6;">мг/л</span></h5><div class="chart-wrapper"><canvas id="param-chart"></canvas></div></div>
     <div class="chart-container"><h5>Температура <span style="font-size:8px;opacity:0.6;">°C</span></h5><div class="chart-wrapper"><canvas id="temp-chart"></canvas></div></div>
@@ -610,6 +610,18 @@ function setupControls() {
     document.getElementById('timeline-slider').addEventListener('input', e => { onTimelineChange(parseInt(e.target.value)); });
     document.getElementById('menu-toggle').addEventListener('click', () => document.getElementById('menu').classList.add('open'));
     document.getElementById('menu-close').addEventListener('click', () => document.getElementById('menu').classList.remove('open'));
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            const menu = document.getElementById('menu');
+            const chartsPanel = document.getElementById('charts-panel');
+            if (menu && menu.classList.contains('open')) {
+                document.getElementById('menu-close').click();
+            }
+            if (chartsPanel && chartsPanel.style.display !== 'none') {
+                document.getElementById('charts-close-btn').click();
+            }
+        }
+    });
     document.getElementById('charts-close-btn').addEventListener('click', () => {
         state.selectedStation = null;
         document.getElementById('charts-panel').style.display = 'none';
