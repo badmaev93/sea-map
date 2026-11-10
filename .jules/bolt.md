@@ -7,3 +7,6 @@
 ## 2025-02-28 - [Mapbox style updates memoization]
 **Learning:** During timeline scrubbing in Mapbox, updating layout and paint properties that haven't actually changed causes expensive WebGL shader invalidations and DOM thrashing (in the legend), severely impacting framerate.
 **Action:** Always memoize Mapbox `setLayoutProperty`, `setPaintProperty` and associated heavy DOM updates based on a derived state key if only the underlying data layer is expected to change during an interaction (like a timeline slider).
+## 2025-03-24 - [Avoid recalculating static derived state during UI scrubbing]
+**Learning:** Frequent UI events, such as scrubbing a timeline slider, often trigger widespread update routines that inadvertently recalculate static data (like filtering large point arrays, parsing strings, and date sorting) causing noticeable frame drops and lag.
+**Action:** When a UI component updates continuously based on a rapid interaction, identify static historical data in the calculation path and memoize it. Use specific caching keys (like station ID and horizon) to compute derived arrays only once and retrieve them instantly during rapid state changes.
