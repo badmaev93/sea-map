@@ -13,3 +13,8 @@
 **Vulnerability:** The custom rate limiting middleware using a `Map` structure was susceptible to memory exhaustion (OOM) via IP spoofing or large number of unique requesters. Also, `req.ip` resolved to proxy IP behind proxies causing rate limit bypass or blanket denial of service. JSON parsing lacked a payload size limit.
 **Learning:** Naive in-memory rate limiting without a strict upper bound on tracked entities opens up OOM attack vectors. Express must explicitly trust the proxy to get correct client IPs when deployed in modern hosting environments.
 **Prevention:** Cap the size of tracking Maps and evict old entries. Set `trust proxy` correctly in Express when deployed behind proxies. Always configure payload limits on parsing middlewares like `express.json()`.
+
+## 2024-05-24 - [Missing SRI and Version Pinning on CDN Libraries]
+**Vulnerability:** External CDN scripts and stylesheets (`mapbox-gl.css`, `mapbox-gl.js`, `chart.js`) in `index.html` were loaded without Subresource Integrity (SRI) hashes and some without pinned versions.
+**Learning:** Without SRI, if a CDN is compromised, malicious code could be served to users. Unpinned versions can introduce unexpected breaking changes or vulnerabilities if the library updates automatically.
+**Prevention:** Always pin dependencies to specific versions and include `integrity` and `crossorigin="anonymous"` attributes for all external CDN resources to ensure the code remains untampered and predictable.
