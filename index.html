@@ -160,6 +160,7 @@ let timelineDates = [];
 let timelineIndex = 0;
 let timelineInterval = null;
 let lastStyleKey = null;
+let lastDataKey = null;
 
 function escapeHTML(str) { if (str == null) return ''; return String(str).replace(/[&<>'"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[match]); }
 function formatNumber(value, decimalPlaces) { if (typeof value !== 'number' || !isFinite(value)) return 'н/д'; return value.toFixed(decimalPlaces).replace('.', ','); }
@@ -403,9 +404,19 @@ function updateCharts() {
 
 function updateLayers() {
     const key = `${state.year}_${state.season}_${state.horizon}`;
-    const filteredFeatures = groupedFeatures[key] || [];
-    const source = map.getSource('points-source');
-    if (source) source.setData({ type: 'FeatureCollection', features: filteredFeatures });
+
+    // ⚡ Bolt Optimization: Memoize map source data updates.
+    // What: Only update the GeoJSON source when data-defining state (year, season, horizon) changes.
+    // Why: `setData` forces Mapbox to re-parse the GeoJSON and rebuild internal worker tiles. Unconditionally calling it on purely stylistic changes (like toggling parameter labels) blocks the main thread.
+    // Impact: Eliminates a major source of layout thrashing and stuttering when toggling parameters.
+    if (lastDataKey !== key) {
+        const filteredFeatures = groupedFeatures[key] || [];
+        const source = map.getSource('points-source');
+        if (source) {
+            source.setData({ type: 'FeatureCollection', features: filteredFeatures });
+            lastDataKey = key;
+        }
+    }
 
     // ⚡ Bolt Optimization: Memoize Mapbox style and legend updates
     // What: Only update Mapbox paint properties, layout properties, and legend if the defining state variables have changed.

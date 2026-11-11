@@ -10,3 +10,6 @@
 ## 2025-03-24 - [Avoid recalculating static derived state during UI scrubbing]
 **Learning:** Frequent UI events, such as scrubbing a timeline slider, often trigger widespread update routines that inadvertently recalculate static data (like filtering large point arrays, parsing strings, and date sorting) causing noticeable frame drops and lag.
 **Action:** When a UI component updates continuously based on a rapid interaction, identify static historical data in the calculation path and memoize it. Use specific caching keys (like station ID and horizon) to compute derived arrays only once and retrieve them instantly during rapid state changes.
+## 2025-05-18 - [Mapbox GeoJSON Source Optimization]
+**Learning:** Calling `setData` on a Mapbox GeoJSON source unconditionally during stylistic UI changes (like toggling parameter labels or interacting with controls) forces expensive internal re-parsing and rebuilding of worker tiles, causing main-thread blocking and layout thrashing.
+**Action:** When a UI interaction primarily updates stylistic layers, wrap Mapbox `source.setData()` calls in a conditional block (memoization) to ensure they are only executed when the actual data-defining state properties (e.g., year, season, horizon) change.
