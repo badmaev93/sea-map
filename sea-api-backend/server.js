@@ -84,6 +84,7 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' }));
 
 const isolinesCache = new Map();
+let cachedAllDataJson = null;
 
 function loadData() {
     return new Promise((resolve, reject) => {
@@ -171,7 +172,7 @@ async function precomputeAndCacheIsolines(allData, coastlinePolygon) {
                 .map(p => turf.point([p.longitude, p.latitude], { [param]: p[param] }));
 
             if (features.length < 3) {
-                isolinesCache.set(cacheKey, turf.featureCollection([]));
+                isolinesCache.set(cacheKey, JSON.stringify(turf.featureCollection([])));
                 continue;
             }
 
@@ -209,11 +210,12 @@ async function precomputeAndCacheIsolines(allData, coastlinePolygon) {
                     feature.properties.value = feature.properties[param];
                 });
 
-                isolinesCache.set(cacheKey, finalIsolines);
+                // ⚡ Bolt: Store as string to skip JSON.stringify on the event loop for every request
+                isolinesCache.set(cacheKey, JSON.stringify(finalIsolines));
 
             } catch (error) {
                 console.error(`Ошибка при кэшировании ${cacheKey}:`, error.message);
-                isolinesCache.set(cacheKey, turf.featureCollection([]));
+                isolinesCache.set(cacheKey, JSON.stringify(turf.featureCollection([])));
             }
         }
     }
@@ -224,6 +226,10 @@ async function precomputeAndCacheIsolines(allData, coastlinePolygon) {
 async function startServer() {
     try {
         const allData = await loadData();
+
+        // ⚡ Bolt: Cache stringified JSON to avoid blocking the event loop on large requests
+        cachedAllDataJson = JSON.stringify(allData);
+
         const localCoastline = getLocalCoastline(allData);
 
         precomputeAndCacheIsolines(allData, localCoastline).catch(err => {
@@ -232,7 +238,10 @@ async function startServer() {
         
         app.get('/', (req, res) => res.send('API сервер для карты работает!'));
 
-        app.get('/api/data', (req, res) => res.json(allData));
+        app.get('/api/data', (req, res) => {
+            res.type('json');
+            res.send(cachedAllDataJson);
+        });
 
         app.get('/api/isolines', (req, res) => {
             const { year, horizon, param } = req.query;
@@ -268,7 +277,8 @@ async function startServer() {
 
             if (isolinesCache.has(cacheKey)) {
                 console.log(`Запрос изолиний: ${cacheKey} - данные найдены в кэше`);
-                res.json(isolinesCache.get(cacheKey));
+                res.type('json');
+                res.send(isolinesCache.get(cacheKey));
             } else {
                 console.log(`Запрос изолиний: ${cacheKey} - данные не найдены`);
                 res.status(404).json({
