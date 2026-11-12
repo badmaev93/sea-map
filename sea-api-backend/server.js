@@ -286,6 +286,9 @@ async function startServer() {
         });
 
         app.use((err, req, res, next) => {
+            if (err.message === 'Not allowed by CORS') {
+                return res.status(403).json({ error: 'CORS policy violation' });
+            }
             console.error('Ошибка сервера:', err);
             res.status(500).json({
                 error: 'Внутренняя ошибка сервера',

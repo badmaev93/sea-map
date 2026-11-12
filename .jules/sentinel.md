@@ -18,3 +18,8 @@
 **Vulnerability:** External CDN scripts and stylesheets (`mapbox-gl.css`, `mapbox-gl.js`, `chart.js`) in `index.html` were loaded without Subresource Integrity (SRI) hashes and some without pinned versions.
 **Learning:** Without SRI, if a CDN is compromised, malicious code could be served to users. Unpinned versions can introduce unexpected breaking changes or vulnerabilities if the library updates automatically.
 **Prevention:** Always pin dependencies to specific versions and include `integrity` and `crossorigin="anonymous"` attributes for all external CDN resources to ensure the code remains untampered and predictable.
+
+## 2024-05-25 - [CORS Error Exposed as 500 Internal Server Error]
+**Vulnerability:** The Express global error handler was catching CORS errors (e.g. `Not allowed by CORS` from the `cors` middleware) and responding with a `500 Internal Server Error`.
+**Learning:** This misconfiguration misrepresents a client-side origin violation as a server failure. An attacker could exploit this by constantly sending invalid origins, flooding logs, and masking legitimate internal server errors.
+**Prevention:** Always check error instances in global error handlers and map `CORS` related errors to their proper HTTP Status (`403 Forbidden`).
