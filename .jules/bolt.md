@@ -13,3 +13,8 @@
 ## 2025-05-18 - [Mapbox GeoJSON Source Optimization]
 **Learning:** Calling `setData` on a Mapbox GeoJSON source unconditionally during stylistic UI changes (like toggling parameter labels or interacting with controls) forces expensive internal re-parsing and rebuilding of worker tiles, causing main-thread blocking and layout thrashing.
 **Action:** When a UI interaction primarily updates stylistic layers, wrap Mapbox `source.setData()` calls in a conditional block (memoization) to ensure they are only executed when the actual data-defining state properties (e.g., year, season, horizon) change.
+## 2024-05-24 - Avoid Event Loop Blocking with Pre-serialized JSON
+
+**Learning:** When creating endpoints that serve static or rarely changing data (like historical datasets or precomputed geometries), calling `JSON.stringify(allData)` on every single request forces the Node.js main event loop to synchronously parse and serialize potentially huge objects. In a high-traffic scenario or when scrubbing a timeline on the frontend, this blocks the event loop and delays all other concurrent requests.
+
+**Action:** Pre-serialize static JSON data during application startup or when data is refreshed, store it as a string (`let cachedDataJson = JSON.stringify(data)`), and use `res.type('json'); res.send(cachedDataJson)` to serve it instantly without computational overhead. Apply this to both the raw `/api/data` endpoint and within the in-memory cache for `/api/isolines`.
